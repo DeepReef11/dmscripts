@@ -12,6 +12,7 @@
 # Set with the flags "-e", "-u","-o pipefail" cause the script to fail
 # if certain things happen, which is a good thing.  Otherwise, we can
 # get hidden bugs that are hard to discover.
+
 set -euo pipefail
 _path="$(cd "$(dirname "${BASH_SOURCE[0]}")" && cd "$(dirname "$(readlink "${BASH_SOURCE[0]}" || echo ".")")" && pwd)"
 if [[  -f "${_path}/_dm-helper.sh" ]]; then
@@ -26,15 +27,28 @@ fi
 # shellcheck disable=SC1090
 source "$(get_config)"
 
+launchaction() {
+  if [ -n "$action" ]; then 
+    choice=$(echo -e "y\nn" | ${DMENU} "Execute: $action ?") 
+      if [ "$choice" == "y" ]; then
+        eval "$action" 
+        echo "Executed: $action ." 
+      fi
+    fi
+}
+
 main() {
   # Clean options array making sure that the files exist
   declare -A _clean_list
   # As this is loaded from other file it is technically not defined
   # shellcheck disable=SC2154
   for i in "${!confedit_list[@]}"; do
-    [[ -f ${confedit_list["${i}"]} ]] && _clean_list["${i}"]=${confedit_list["${i}"]}
+    #[[ -f ${confedit_list["${i}"]} ]] && _clean_list["${i}"]=${confedit_list["${i}"]}
+    echo ${confedit_list["${i}"]}
+    file=$(nawk -F "$confedit_delimiter" '{print $1}' <<< ${confedit_list["${i}"]})
+    [[ -f "$file" ]] && _clean_list["${i}"]=${confedit_list["${i}"]}
   done
-
+  
   # Piping the above array (cleaned) into dmenu.
   # We use "printf '%s\n'" to format the array one item to a line.
   choice=$(printf '%s\n' "${!_clean_list[@]}" | sort | ${DMENU} 'Edit config:' "$@")
@@ -42,8 +56,10 @@ main() {
   # What to do when/if we choose a file to edit.
   if [ "$choice" ]; then
     cfg=$(printf '%s\n' "${_clean_list["${choice}"]}")
+    file=$(nawk -F "$confedit_delimiter" '{print $1}' <<< $cfg)
+    action=$(awk -F "$confedit_delimiter" '{print $2}' <<< $cfg)
     # shellcheck disable=SC2154
-    $DMEDITOR "$cfg"
+    $DMEDITOR "$file" && launchaction
   # What to do if we just escape without choosing anything.
   else
       echo "Program terminated." && exit 0
