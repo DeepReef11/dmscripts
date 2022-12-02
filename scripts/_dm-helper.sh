@@ -53,6 +53,10 @@ get_config() {
   done
 }
 
+get_tips() {
+	echo "$(dirname $(get_config))/tips"
+}
+
 # Check if config has updates that should be displayed to the user
 check_updated_config() {
   local _base_file
