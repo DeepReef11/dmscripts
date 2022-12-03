@@ -45,6 +45,16 @@ function main() {
 		echo "$choice"
 		filepath="${findtips["${choice}"]}"
 	fi
-	$VIEWER "$filepath"	
+	echo "$filepath"
+	if [[ "$filepath" == *.md ]]; then
+		viewerpipingflag=""
+		if [ "$PDF_VIEWER" == "zathura" ] ; then
+			echo "is zathura"
+			viewerpipingflag="-"
+		fi
+		pandoc -t pdf "$filepath" | $PDF_VIEWER $viewerpipingflag
+	else
+		$PDF_VIEWER "$filepath"
+	fi
 }
 [[ "${BASH_SOURCE[0]}" == "${0}" ]] && main "$@"
