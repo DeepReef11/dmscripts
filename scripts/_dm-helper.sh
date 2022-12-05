@@ -57,6 +57,20 @@ get_tips() {
 	echo "$(dirname $(get_config))/tips"
 }
 
+md_file_to_viewer() {
+	viewerpipingflag=""
+	if [ "$PDF_VIEWER" == "zathura" ] ; then
+		echo "is zathura"
+		viewerpipingflag="-"
+		pandoc -t pdf "$filepath" | $PDF_VIEWER $viewerpipingflag
+	else
+		$PDF_VIEWER "$filepath"
+	fi
+
+}
+
+
+
 # Check if config has updates that should be displayed to the user
 check_updated_config() {
   local _base_file

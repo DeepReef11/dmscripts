@@ -20,6 +20,16 @@ source "$(get_config)" # from _dm-helper.sh
 
 check_updated_config
 
+add_new_tip() {
+	filepath=$(fileexplorer "${findtips_start}" | tail -n1)
+	echo "$filepath"
+	keyname=""
+	while [ "$keyname" == "" ] ; do 
+		keyname=$(dmenu -p "Name for this tip file: " < /dev/null)
+	done	
+	echo -e "findtips[\"$keyname\"]=\"$filepath\"" >> $(get_tips)
+
+}
 
 function main() {
 	echo "$(get_config)"
@@ -36,23 +46,14 @@ function main() {
 	choice=$(printf '%s\n' "$txtAddChoice${NewLine}${!findtips[@]}" | sort | ${DMENU} 'Select tip file: ' "$@") 	
 	
 	if [ "$choice" == "$txtAddChoice" ]; then
-		filepath=$(fileexplorer "${findtips_start}" | tail -n1)
-		echo "$filepath"
-		keyname=$(dmenu -p "Name for this tip file: " < /dev/null)
-		echo -e "findtips[\"$keyname\"]=\"$filepath\"" >> $(get_tips)
-
+		add_new_tip
 	else
 		echo "$choice"
 		filepath="${findtips["${choice}"]}"
 	fi
 	echo "$filepath"
 	if [[ "$filepath" == *.md ]]; then
-		viewerpipingflag=""
-		if [ "$PDF_VIEWER" == "zathura" ] ; then
-			echo "is zathura"
-			viewerpipingflag="-"
-		fi
-		pandoc -t pdf "$filepath" | $PDF_VIEWER $viewerpipingflag
+		md_file_to_viewer
 	else
 		$PDF_VIEWER "$filepath"
 	fi
