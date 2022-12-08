@@ -21,7 +21,7 @@ source "$(get_config)" # from _dm-helper.sh
 check_updated_config
 
 add_new_tip() {
-	filepath=$(fileexplorer "${findtips_start}" | tail -n1)
+	filepath=$(file_explorer "${findtips_start}")
 	echo "$filepath"
 	keyname=""
 	while [ "$keyname" == "" ] ; do 
@@ -43,16 +43,22 @@ function main() {
 	#echo "${!findtips[@]}"
 	NewLine=$'\n'
 	txtAddChoice="Add tip file to list"
-	choice=$(printf '%s\n' "$txtAddChoice${NewLine}${!findtips[@]}" | sort | ${DMENU} 'Select tip file: ' "$@") 	
+	txtEditTipsFile="Edit tips file"
+	choice=$(printf '%s\n' "$txtAddChoice${NewLine}${txtEditTipsFile}${NewLine}${!findtips[@]}" | sort | ${DMENU} 'Select tip file: ' "$@") 	
 	
+  filepath=""
 	if [ "$choice" == "$txtAddChoice" ]; then
 		add_new_tip
+	elif [ "$choice" == "$txtEditTipsFile" ] ; then
+		$DMEDITOR "$(get_tips)"	
+    exit 0
 	else
 		echo "$choice"
 		filepath="${findtips["${choice}"]}"
 	fi
-	echo "$filepath"
-	if [[ "$filepath" == *.md ]]; then
+	if [ ! -f "$filepath" ] ; then
+    exit 1
+  elif [[ "$filepath" == *.md ]]; then
 		md_file_to_viewer
 	else
 		$PDF_VIEWER "$filepath"

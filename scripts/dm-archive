@@ -16,20 +16,85 @@ select_path() {
 echo 1	
 }
 
-main() {
 
-clip=$(xclip -sel c -o)
-echo "$clip" 
-
-choice=$(echo -e "yt\nwget" | ${DMENU} "Save to: ")
-
-if [ "$choice" == "yt" ]; then
-  echo "$clip" >> ${HOME}/workspace/nextcloud/shared-folder/download-queue/youtube.txt
-  echo -e $(<${HOME}/workspace/nextcloud/Shared\ Folder/download-queue/youtube.txt)
-elif [ "$choice" == "wget" ]; then
-  echo "$clip" >> ${HOME}/workspace/nextcloud/shared-folder/download-queue/url.txt
-  echo -e $(<${HOME}/workspace/nextcloud/Shared\ Folder/download-queue/url.txt)
-fi
+saveSinglePageWget() {
+	filepath=$(file_explorer)  # TODO: a start path for archives could be added in config. 
+	wget -E -H -k -K -nd -N -p -P "$filepath/$dirname" \
+	  $clip
+	
 }
 
+saveWebPage() {
+	txtWgetSinglePage="Save single page with wget"
+	choice=$(echo -e "${txtWgetSinglePage}\n" | ${DMENU} "$txtSaveWebPage: ")
+	case $choice in
+		$txtWgetSinglePage)
+			echo "$txtWgetSinglePage"
+			saveSinglePageWget
+			;;
+		esac
+}
+
+downloadYtNcp() {
+	#     var regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+ 	fileYtNcpList="${downloadlists_start}/ytncp.txt"
+	touch "$fileYtNcpList"
+	line=$(head -n1 "$fileYtNcpList")
+	if [ "$line" != "$downloadListsStructure" ] ; then
+		echo "$downloadListsStructure
+		$(cat $fileYtNcpList)" > "$fileYtNcpList"
+	fi
+  id=$(uuidgen)
+	filepath=$(file_explorer)  # TODO: a start path for archives could be added in config. 
+  echo "$clip${delimiter}$id${delimiter}$filepath" >> "$fileYtNcpList"
+}
+
+downloadVideo() {
+	
+	downloadListsStructure="# url${delimiter}id${delimiter}path" 
+  txtYtNcp="Yt-dl to Ncp"
+	choice=$(echo -e "${txtYtNcp}\n" | ${DMENU} "$txtDownloadVideo: ")
+	case $choice in
+		$txtYtNcp)
+			echo "$txtYtNcp"
+			downloadYtNcp
+			;;
+		esac
+
+}
+
+main() {
+
+	clip=$(xclip -sel c -o) || (echo "Nothing in clipboard. Copy url before using" && exit 1) 
+echo "Clipboard: $clip" 
+txtSaveWebPage="Save web page(s)"
+txtDownloadVideo="Download video(s)"
+txtDownloadFile="Download file(s)"
+choice=$(echo -e "${txtSaveWebPage}\n${txtDownloadVideo}\n${txtDownloadFile}" | ${DMENU} "Archive options: ")
+
+case $choice in
+	$txtSaveWebPage)
+		echo "$txtSaveWebPage"
+		saveWebPage
+		# wget -E -H -k -K -nd -N -p -P DESTINATIONDIRECTORY \
+		# URL
+		;;
+	$txtDownloadVideo)
+		echo "$txtDownloadVideo"
+		downloadVideo
+		;;
+	$txtDownloadFile)
+		echo "$txtDownloadFile"
+		;;
+esac
+
+
+#if [ "$choice" == "yt" ]; then
+#  echo "$clip" >> ${HOME}/workspace/nextcloud/shared-folder/download-queue/youtube.txt
+#  echo -e $(<${HOME}/workspace/nextcloud/Shared\ Folder/download-queue/youtube.txt)
+#elif [ "$choice" == "wget" ]; then
+#  echo "$clip" >> ${HOME}/workspace/nextcloud/shared-folder/download-queue/url.txt
+#  echo -e $(<${HOME}/workspace/nextcloud/Shared\ Folder/download-queue/url.txt)
+#fi
+}
 [[ "${BASH_SOURCE[0]}" == "${0}" ]] && main "$@"

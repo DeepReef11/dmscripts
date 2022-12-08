@@ -69,7 +69,68 @@ md_file_to_viewer() {
 
 }
 
+#
+create_directory() {
+  # $1: Path of directory
+  # $2: Optional string for the prompt
+  # Output: $dirpath
+  # 
+  # Other output:
+  # $(create_directory | tail -n1) 
+  txtPrompt="Name of directory: "
+  if [ "$#" -gt 1 ] ; then
+      txtPrompt="$2"
+  fi 
 
+	filepath="$1"  # TODO: a start path for archives could be added in config. 
+  dirname=""
+  while [ "$dirname" == "" ] ; do 
+	  	dirname=$(dmenu -p "$txtPrompt" < /dev/null)
+  done
+  dirpath="$filepath/$dirname" 
+	mkdir "$dirpath"
+  echo "$dirpath"
+  
+}
+
+file_explorer() {
+
+start="${fileexplorer_start}"
+if [ "$#" -gt 0 ] && [ ! -z "$1" ] ; then
+	start="$1"
+fi
+if [ ! -d "$start" ];
+then
+    echo "$start doesn't exists on your filesystem."
+    help
+    exit 1
+fi
+
+txtMkDir="Create a new directory"
+currentpath="$start"
+br="\n"
+while true; do
+  choice=$(echo -e "$txtMkDir\n$(ls -b -a "$currentpath")" | ${DMENU} 'Select: ') #"$@")
+	case $choice in
+    "$txtMkDir") 
+      currentpath=$(create_directory $currentpath $txtMkDir)
+      ;; 
+		.) 
+			break;;
+		..) 
+			currentpath="$(dirname "$currentpath")";;
+		*) 
+		  currentpath="$currentpath/$choice"
+		  if [ ! -d "$currentpath" ]; then
+			break
+		fi
+		
+	esac
+
+done
+
+echo "$currentpath"
+}
 
 # Check if config has updates that should be displayed to the user
 check_updated_config() {
