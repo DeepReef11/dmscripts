@@ -37,7 +37,7 @@ saveWebPage() {
 
 downloadYtNcp() {
 	#     var regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
- 	fileYtNcpList="${downloadlists_start}/ytncp.txt"
+ 	fileYtNcpList="${ncp_local_dir}/${ncp_downloadlists_dir}/ytncp.txt"
 	touch "$fileYtNcpList"
 	line=$(head -n1 "$fileYtNcpList")
 	if [ "$line" != "$downloadListsStructure" ] ; then
@@ -45,7 +45,8 @@ downloadYtNcp() {
 		$(cat $fileYtNcpList)" > "$fileYtNcpList"
 	fi
   id=$(uuidgen)
-	filepath=$(file_explorer)  # TODO: a start path for archives could be added in config. 
+	filepath=$(file_explorer "$ncp_local_dir")  
+  filepath=$(string_remove_to_index_of_string "$filepath" "$ncp_local_dir")
   echo "$clip${delimiter}$id${delimiter}$filepath" >> "$fileYtNcpList"
 }
 

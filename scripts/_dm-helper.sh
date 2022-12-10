@@ -93,6 +93,15 @@ create_directory() {
   
 }
 
+# Remove everything before index of string
+# $1: string
+# $2: string to find index to remove
+string_remove_to_index_of_string() {
+  t="$1"
+searchstring="$2"
+  echo "${t#*$searchstring}"
+}
+
 file_explorer() {
 
 start="${fileexplorer_start}"
