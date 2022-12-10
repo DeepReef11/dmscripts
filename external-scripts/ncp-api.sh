@@ -2,6 +2,8 @@
 #
 # This scripts provides nextcloud related api funciton
 #
+# It works with oh-my-zsh shell (maybe just zsh), I do not know why.
+#
 # read with zsh: https://superuser.com/questions/555874/zsh-read-command-fails-within-bash-function-read1-p-no-coprocess
 # Upload file to nextlcoud through api: https://linuxfun.org/en/2021/07/02/nextcloud-operation-api-with-curl-en/
 #
@@ -16,12 +18,12 @@
 # ${url}${delimiter}${id}${delimiter}${filepath}
 #
 download_video_from_list() {
-  passfile="/home/jo/workspace/token/fu.txt"
+  passfile="${HOME}/workspace/token/fu.txt"
   listpath="shared-folder/download-queue/ytncp.txt"
 user="fu"
-url="192.168.2.52"
+url="192.168.0.199"
 delimiter=", "
-downloadDirectory="${HOME}/Videos/yt-dl"
+downloadDirectory="${HOME}/nc/yt-dl"
 help()
 {
 	echo "-l: file path to video list in nextcloud. Default is $listpath"
@@ -68,35 +70,38 @@ fi
 listfile=$(ncp_get_file -t "$listpath" -p "$passfile" -u "$url" -n "$user" $($insecure && echo "-i"))
 uncompletedListFile="$listfile"
 while IFS= read -r line; do
-  trimmed=$(echo "$line" | xargs)
-  if [ -n "$trimmed" ] && [[ "$trimmed" != "#"*  ]] ; then
-  newarray=()
-  string="$line$delimiter"
-  while [[ "$string"  ]]; do
-    newarray+=( "${string%%"$delimiter"*}" )
-    string=${string#*"$delimiter"}
-  done
-  echo "1: ${newarray[1]}, 2: ${newarray[2]}, 3: ${newarray[3]}"   
-  lurl="${newarray[1]}"
-  lid="${newarray[2]}"
-  lpath="${newarray[3]}"
+  parse_list_line
+  # trimmed=$(echo "$line" | xargs)
+  # if [ -n "$trimmed" ] && [[ "$trimmed" != "#"*  ]] ; then
+  #   newarray=()
+    # string="$line$delimiter"
+    # while [[ "$string"  ]]; do
+      # newarray+=( "${string%%"$delimiter"*}" )
+      # string=${string#*"$delimiter"}
+  #done
+  #echo "1: ${newarray[1]}, 2: ${newarray[2]}, 3: ${newarray[3]}"   
+  #lurl="${newarray[1]}"
+  #lid="${newarray[2]}"
+  #lpath="${newarray[3]}"
   #sudo /usr/local/bin/youtube-dl -f 18 "${lurl}" --cookie 'cookie.txt' -o "/media/kingston/download/video/%(upload_date)s-[%(uploader)s]-%(title)s.%(ext)s"
   # could be needed to use full path of youtube-dl
   youtube-dl --restrict-filenames -f 18 "${lurl}" -o "${downloadDirectory}/${lid}-%(upload_date)s-%(uploader)s-%(title)s.%(ext)s" && echo "here" && ytcompleted="true"
   echo "yt completed $ytcompleted."
     if [ "$ytcompleted" = "true" ] ; then
       echo "moving ${lid} to ${lpath} in nextcloud"
-      videoFileName=$(ls "$downloadDirectory" | grep "${lid}")
-      videoFilePath="$downloadDirectory/$videoFileName"
-      nameWithoutID=$(echo "${videoFileName#*${lid}-}")
+      #videoFileName=$(ls "$downloadDirectory" | grep "${lid}")
+      #videoFilePath="$downloadDirectory/$videoFileName"
+      #nameWithoutID=$(echo "${videoFileName#*${lid}-}")
       # Upload video to nextcloud
-      echo "Uploading video: $videoFilePath to: $lpath/$nameWithoutID"
-      ncp_upload_file -f "$videoFilePath" -t "$lpath/$nameWithoutID" -p "$passfile" -u "$url" -n "$user" $($insecure && echo "-i") && rm "$videoFilePath"
+      #echo "Uploading video: $videoFilePath to: $lpath/$nameWithoutID"
+      #ncp_upload_file -f "$videoFilePath" -t "$lpath/$nameWithoutID" -p "$passfile" -u "$url" -n "$user" $($insecure && echo "-i") && rm "$videoFilePath"
+      nc_upload_without_id
       echo "removing $line from list..."
       uncompletedListFile=$(echo "$listfile" | sed "/$lid/d") 
       localListFilePath="${downloadDirectory}/ytncp.txt"
       listfile="$uncompletedListFile"
-      rm $localListFilePath && echo "$uncompletedListFile" > "$localListFilePath" && 
+      rm -f $localListFilePath
+      echo "$uncompletedListFile" > "$localListFilePath" && 
       echo "Uploading list file: $localListFilePath to: $listpath .
       Content:
       $(cat $localListFilePath)
@@ -112,7 +117,46 @@ while IFS= read -r line; do
 done <<< "$listfile"
 }
 
+# Take a list file line and parse it.
+# Param:
+# $line: line of list file
+# Output:
+# $lid: ID of file
+# $lurl: url of file
+# $lpath: path to nextcloud
+#
+parse_list_line() {
+  trimmed=$(echo "$line" | xargs)
+  if [ -n "$trimmed" ] && [[ "$trimmed" != "#"*  ]] ; then
+    newarray=()
+    string="$line$delimiter"
+    while [[ "$string"  ]]; do
+      newarray+=( "${string%%"$delimiter"*}" )
+      string=${string#*"$delimiter"}
+  done
+  echo "1: ${newarray[1]}, 2: ${newarray[2]}, 3: ${newarray[3]}"   
+  lurl="${newarray[1]}"
+  lid="${newarray[2]}"
+  lpath="${newarray[3]}"
 
+}
+
+# Upload file without ID.
+# Param:
+# $downloadDirectory: local directory to download files 
+# $lpath: path to upload file in nextcloud
+# $passfile: path to password
+# $url: Url to nextcloud
+# $user: Nextcloud user
+# $insecure: Must be declared to make insecure upload (insecure="true")
+nc_upload_without_id() {
+  fileName=$(ls "$downloadDirectory" | grep "${lid}")
+  filePath="$downloadDirectory/$fileName"
+  nameWithoutID=$(echo "${fileName#*${lid}-}")
+  # Upload video to nextcloud
+  ncp_upload_file -f "$filePath" -t "$lpath/$nameWithoutID" -p "$passfile" -u "$url" -n "$user" $($insecure && echo "-i") && rm "$filePath"
+
+}
 
 
 ncp_get_file() {
