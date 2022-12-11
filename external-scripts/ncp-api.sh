@@ -13,7 +13,7 @@
 
 
 nc_api_passfile="${HOME}/workspace/token/fu.txt"
-nc_api_listpath="shared-folder/download-queue"#/wget.txt"
+nc_api_listpath="shared-folder/download-queue" #/wget.txt"
 nc_api_user="fu"
 nc_api_url="192.168.0.199"
 nc_api_delimiter=", "
@@ -132,10 +132,10 @@ parse_list_line() {
   trimmed=$(echo "$line" | xargs)
   if [ -n "$trimmed" ] && [[ "$trimmed" != "#"*  ]] ; then
     newarray=()
-    string="$line$delimiter"
+    string="$line$nc_api_delimiter"
     while [[ "$string"  ]]; do
-      newarray+=( "${string%%"$delimiter"*}" )
-      string=${string#*"$delimiter"}
+      newarray+=( "${string%%"$nc_api_delimiter"*}" )
+      string=${string#*"$nc_api_delimiter"}
     done
     lurl="${newarray[1]}"
     lid="${newarray[2]}"
