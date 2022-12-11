@@ -70,7 +70,8 @@ fi
 listfile=$(ncp_get_file -t "$listpath" -p "$passfile" -u "$url" -n "$user" $($insecure && echo "-i"))
 uncompletedListFile="$listfile"
 while IFS= read -r line; do
-  parse_list_line
+  isParsed=parse_list_line
+  if [ -n isParsed ] ; then
   # trimmed=$(echo "$line" | xargs)
   # if [ -n "$trimmed" ] && [[ "$trimmed" != "#"*  ]] ; then
   #   newarray=()
@@ -133,12 +134,13 @@ parse_list_line() {
     while [[ "$string"  ]]; do
       newarray+=( "${string%%"$delimiter"*}" )
       string=${string#*"$delimiter"}
-  done
-  echo "1: ${newarray[1]}, 2: ${newarray[2]}, 3: ${newarray[3]}"   
-  lurl="${newarray[1]}"
-  lid="${newarray[2]}"
-  lpath="${newarray[3]}"
+    done
+    lurl="${newarray[1]}"
+    lid="${newarray[2]}"
+    lpath="${newarray[3]}"
 
+    echo "parsed"
+  fi
 }
 
 # Upload file without ID.
