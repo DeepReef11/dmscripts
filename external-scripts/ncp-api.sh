@@ -94,8 +94,8 @@ uncompletedListFile="$listfile"
 
         fi
       fi
-    fi
-  done <<< "$listfile"
+    done <<< "$listfile"
+  fi
 }
 
 # Take a list file line and parse it.
