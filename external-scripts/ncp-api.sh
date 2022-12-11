@@ -11,7 +11,15 @@
 #IFS= read -sr "?Enter a password: " password
 #read "?Path to file: " filepath
 
-# arg is path to file and file path
+
+nc_reset_default_value() {
+  passfile="${HOME}/workspace/token/fu.txt"
+  listpath="shared-folder/download-queue/wget.txt"
+  user="fu"
+  url="192.168.0.199"
+  delimiter=", "
+  downloadDirectory="${HOME}/nc/wget"
+}
 
 # This function use a list of file url to download a file and upload it
 # to the entered path in nextcloud
@@ -19,12 +27,7 @@
 # ${url}${delimiter}${id}${delimiter}${filepath}
 #
 download_file_from_list_with_wget() {
-  passfile="${HOME}/workspace/token/fu.txt"
-  listpath="shared-folder/download-queue/wget.txt"
-  user="fu"
-  url="192.168.0.199"
-  delimiter=", "
-  downloadDirectory="${HOME}/nc/wget"
+  nc_reset_default_value
   help()
   {
 	  echo "-l: file path to file list in nextcloud. Default is $listpath"
@@ -107,12 +110,7 @@ uncompletedListFile="$listfile"
 # ${url}${delimiter}${id}${delimiter}${filepath}
 #
 download_video_from_list() {
-  passfile="${HOME}/workspace/token/fu.txt"
-  listpath="shared-folder/download-queue/youtube.txt"
-  user="fu"
-  url="192.168.0.199"
-  delimiter=", "
-  downloadDirectory="${HOME}/nc/yt-dl"
+  nc_reset_default_value
   help()
   {
 	  echo "-l: file path to video list in nextcloud. Default is $listpath"
@@ -233,9 +231,7 @@ nc_upload_without_id() {
 
 
 ncp_get_file() {
-passfile="${HOME}/workspace/token/fu.txt"
-user="fu"
-url="192.168.2.52"
+  nc_reset_default_value
 help()
 {
 	echo "-t: file path in nextcloud"
@@ -290,9 +286,7 @@ fi
 # -n: username
 # -i: ignore ssl error
 ncp_upload_file() {
-passfile="${HOME}/workspace/token/fu.txt"
-user="fu"
-url="192.168.2.52"
+nc_reset_default_value
 help()
 {
 	echo "-t: to - file path in nextcloud (optional, Starts at user folder)"
