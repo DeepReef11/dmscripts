@@ -70,8 +70,11 @@ fi
 listfile=$(ncp_get_file -t "$listpath" -p "$passfile" -u "$url" -n "$user" $($insecure && echo "-i"))
 uncompletedListFile="$listfile"
 while IFS= read -r line; do
-  isParsed=parse_list_line
-  if [ -n isParsed ] ; then
+  lurl=""
+  lpath=""
+  lid=""
+  parse_list_line
+  if [ -n "$lurl" ] ; then
   # trimmed=$(echo "$line" | xargs)
   # if [ -n "$trimmed" ] && [[ "$trimmed" != "#"*  ]] ; then
   #   newarray=()
@@ -139,7 +142,6 @@ parse_list_line() {
     lid="${newarray[2]}"
     lpath="${newarray[3]}"
 
-    echo "parsed"
   fi
 }
 
