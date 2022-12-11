@@ -233,7 +233,7 @@ nc_upload_without_id() {
 
 
 ncp_get_file() {
-passfile="/home/jo/workspace/token/fu.txt"
+passfile="${HOME}/workspace/token/fu.txt"
 user="fu"
 url="192.168.2.52"
 help()
@@ -290,7 +290,7 @@ fi
 # -n: username
 # -i: ignore ssl error
 ncp_upload_file() {
-passfile="/home/jo/workspace/token/fu.txt"
+passfile="${HOME}/workspace/token/fu.txt"
 user="fu"
 url="192.168.2.52"
 help()
