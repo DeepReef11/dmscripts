@@ -54,7 +54,7 @@ uncompletedListFile="$listfile"
           nc_upload_without_id
           echo "removing $line from list..."
           uncompletedListFile=$(echo "$listfile" | sed "/$lid/d") 
-          localListFilePath="${nc_api_downloadDirectory}/$nc_wget_list_file}"
+          localListFilePath="${nc_api_downloadDirectory}/${nc_wget_list_file}"
           listfile="$uncompletedListFile"
           rm -f $localListFilePath
           echo "$uncompletedListFile" > "$localListFilePath" && 
@@ -137,9 +137,9 @@ parse_list_line() {
       newarray+=( "${string%%"$nc_api_delimiter"*}" )
       string=${string#*"$nc_api_delimiter"}
     done
-    lurl="${newarray[1]}"
-    lid="${newarray[2]}"
-    lpath="${newarray[3]}"
+    lurl="${newarray[0]}"
+    lid="${newarray[1]}"
+    lpath="${newarray[2]}"
 
   fi
 }
@@ -200,7 +200,7 @@ echo "$nc_api_url"
 echo "from: $_upload_file"
 echo "to: $_upload_file_nc_path"
 echo "curl command $nc_api_url/remote.php/dav/files/$nc_api_user/$_upload_file_nc_path -T $_upload_file"
-pass=`cat $passfile`
-	curl "nc_api_insecure" -X "PUT" -u "$nc_api_user:$pass" "$nc_api_url/remote.php/dav/files/$nc_api_user/$_upload_file_nc_path" -T "$_upload_file"
+pass=`cat $nc_api_passfile`
+	curl "$nc_api_insecure" -X "PUT" -u "$nc_api_user:$pass" "$nc_api_url/remote.php/dav/files/$nc_api_user/$_upload_file_nc_path" -T "$_upload_file"
 echo "done."
 }
