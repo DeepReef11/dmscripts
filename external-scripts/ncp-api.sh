@@ -12,86 +12,49 @@
 #read "?Path to file: " filepath
 
 
-nc_reset_default_value() {
-  passfile="${HOME}/workspace/token/fu.txt"
-  listpath="shared-folder/download-queue/wget.txt"
-  user="fu"
-  url="192.168.0.199"
-  delimiter=", "
-  downloadDirectory="${HOME}/nc/wget"
-  insecure=""
-}
-
+nc_api_passfile="${HOME}/workspace/token/fu.txt"
+nc_api_listpath="shared-folder/download-queue"#/wget.txt"
+nc_api_user="fu"
+nc_api_url="192.168.0.199"
+nc_api_delimiter=", "
+nc_api_downloadDirectory="${HOME}/nc"
+nc_api_insecure="" # --insecure
+nc_wget_list_file="wget.txt"
+nc_yt_list_file="youtube.txt"
+_get_file=""
+_upload_file=""
+_upload_file_nc_path=""
 # This function use a list of file url to download a file and upload it
 # to the entered path in nextcloud
 # The file is used as follow:
 # ${url}${delimiter}${id}${delimiter}${filepath}
 #
 download_file_from_list_with_wget() {
-  nc_reset_default_value
-  help()
-  {
-	  echo "-l: file path to file list in nextcloud. Default is $listpath"
-    echo "-s: Default directory to store file. Default is $downloadDirectory"
-	  echo "-d: Delimiter used in video list. Default is $delimiter"
-	  echo "-p: file path to password (optional. Default is $passfile)"
-	  echo "-u: url (optional. Default is $url)"
-	  echo "-n: username (optional. Default is $user)"
-	  echo "-i: use --insecure arg in curl for ignoring ssl error"
-  }
 
 # flag with arg, use <c>:, put them first.
 # flag without arg, use <c> after flag with args.
-local OPTIND 
-while getopts "l:p:u:n:ih" opt; do
-  case $opt in
-    l) listpath="$OPTARG";;
-
-    d) delimiter="$OPTARG";;
-
-    s) downloadDirectory="$OPTARG";;
-
-    p) passfile="$OPTARG";;
-	    
-    u) url="$OPTARG";;
-
-    n) user="$OPTARG";;
-
-    i) insecure="true";;
-
-    h) help
-       exit;;
-
-    ?)  echo "Invalid option -$OPTARG" >&2
-        help
-    	  exit;;
-  esac
-done
-mkdir -p "$downloadDirectory"
-if [ -z "$listpath" ]; then
-	echo "Need -l arg."
-	help
+mkdir -p "$nc_api_downloadDirectory"
+if [ -z "$nc_api_listpath" ]; then
+	echo "nc_api_listpath is empty"
 	exit
 fi
-listfile=$(ncp_get_file -t "$listpath" -p "$passfile" -u "$url" -n "$user" $("$insecure" && echo "-i"))
+_get_file="$nc_api_listpath/$nc_wget_list_file"
+listfile=$(ncp_get_file) 
 uncompletedListFile="$listfile"
   if [ -n "$listfile" ] ; then
     while IFS= read -r line; do
     parse_list_line
     if [ -n "$lurl" ] ; then
-      #sudo /usr/local/bin/youtube-dl -f 18 "${lurl}" --cookie 'cookie.txt' -o "/media/kingston/download/video/%(upload_date)s-[%(uploader)s]-%(title)s.%(ext)s"
-      # could be needed to use full path of youtube-dl
       completed="false"
       filename=$(basename "$lurl")
-      wget -c "$lurl" -O "${downloadDirectory}/${lid}-$filename" && completed="true"
-      #youtube-dl --restrict-filenames -f 18 "${lurl}" -o "${downloadDirectory}/${lid}-%(upload_date)s-%(uploader)s-%(title)s.%(ext)s" && echo "here" && completed="true"
+      wget -c "$lurl" -O "${nc_api_downloadDirectory}/${lid}-$filename" && completed="true"
       echo "Completed $completed."
         if [ "$completed" = "true" ] ; then
           echo "moving ${lid} to ${lpath} in nextcloud"
           nc_upload_without_id
           echo "removing $line from list..."
           uncompletedListFile=$(echo "$listfile" | sed "/$lid/d") 
-          localListFilePath="${downloadDirectory}/$(basename $listpath)"
+          localListFilePath="${nc_api_downloadDirectory}/$nc_wget_list_file}"
           listfile="$uncompletedListFile"
           rm -f $localListFilePath
           echo "$uncompletedListFile" > "$localListFilePath" && 
@@ -99,7 +62,9 @@ uncompletedListFile="$listfile"
           Content:
           $(cat $localListFilePath)
           End of content." &&
-          ncp_upload_file -f "$localListFilePath" -t "${listpath}" -p "$passfile" -u "$url" -n "$user" $($insecure && echo "-i") &&  echo "Updated listfile" 
+          _upload_file="$localListFilePath" &&
+          _upload_file_nc_path="$nc_api_listpath/$nc_wget_list_file" &&
+          ncp_upload_file &&  echo "Updated listfile" 
 
         fi
       fi
@@ -112,52 +77,15 @@ uncompletedListFile="$listfile"
 # ${url}${delimiter}${id}${delimiter}${filepath}
 #
 download_video_from_list() {
-  nc_reset_default_value
-  help()
-  {
-	  echo "-l: file path to video list in nextcloud. Default is $listpath"
-    echo "-s: Default directory to store file. Default is $downloadDirectory"
-	  echo "-d: Delimiter used in video list. Default is $delimiter"
-	  echo "-p: file path to password (optional. Default is $passfile)"
-	  echo "-u: url (optional. Default is $url)"
-	  echo "-n: username (optional. Default is $user)"
-	  echo "-i: use --insecure arg in curl for ignoring ssl error"
-  }
 
-# flag with arg, use <c>:, put them first.
-# flag without arg, use <c> after flag with args.
-local OPTIND
-while getopts "l:p:u:n:ih" opt; do
-  case $opt in
-    l) listpath="$OPTARG";;
-
-    d) delimiter="$OPTARG";;
-
-    s) downloadDirectory="$OPTARG";;
-
-    p) passfile="$OPTARG";;
-	    
-    u) url="$OPTARG";;
-
-    n) user="$OPTARG";;
-
-    i) insecure="true";;
-
-    h) help
-       exit;;
-
-    ?)  echo "Invalid option -$OPTARG" >&2
-        help
-    	  exit;;
-  esac
-done
-mkdir -p "$downloadDirectory"
-if [ -z "$listpath" ]; then
-	echo "Need -l arg."
+mkdir -p "$nc_api_downloadDirectory"
+if [ -z "$nc_api_listpath" ]; then
+	echo "Need listpath arg."
 	help
 	exit
 fi
-listfile=$(ncp_get_file -t "$listpath" -p "$passfile" -u "$url" -n "$user" $($insecure && echo "-i"))
+_get_file="$nc_api_listpath/$nc_yt_list_file"
+listfile=$(ncp_get_file) 
 uncompletedListFile="$listfile"
   if [ -n "$listfile" ] ; then
     while IFS= read -r line; do
@@ -165,22 +93,23 @@ uncompletedListFile="$listfile"
     if [ -n "$lurl" ] ; then
       #sudo /usr/local/bin/youtube-dl -f 18 "${lurl}" --cookie 'cookie.txt' -o "/media/kingston/download/video/%(upload_date)s-[%(uploader)s]-%(title)s.%(ext)s"
       # could be needed to use full path of youtube-dl
-      youtube-dl --restrict-filenames -f 18 "${lurl}" -o "${downloadDirectory}/${lid}-%(upload_date)s-%(uploader)s-%(title)s.%(ext)s" && echo "here" && ytcompleted="true"
+      youtube-dl --restrict-filenames -f 18 "${lurl}" -o "${nc_api_downloadDirectory}/${lid}-%(upload_date)s-%(uploader)s-%(title)s.%(ext)s" && ytcompleted="true"
       echo "yt completed $ytcompleted."
         if [ "$ytcompleted" = "true" ] ; then
           echo "moving ${lid} to ${lpath} in nextcloud"
           nc_upload_without_id
           echo "removing $line from list..."
           uncompletedListFile=$(echo "$listfile" | sed "/$lid/d") 
-          localListFilePath="${downloadDirectory}/$(basename $listpath)"
-          listfile="$uncompletedListFile"
+          localListFilePath="${nc_api_downloadDirectory}/$nc_yt_list_file"
           rm -f $localListFilePath
           echo "$uncompletedListFile" > "$localListFilePath" && 
           echo "Uploading list file: $localListFilePath to: $listpath .
           Content:
           $(cat $localListFilePath)
           End of content." &&
-          ncp_upload_file -f "$localListFilePath" -t "${listpath}" -p "$passfile" -u "$url" -n "$user" $("$insecure" && echo "-i") &&  echo "Updated listfile" 
+          _upload_file="$localListFilePath" &&
+          _upload_file_nc_path="$nc_api_listpath/$nc_yt_list_file" &&
+          ncp_upload_file &&  echo "Updated listfile" 
 
         fi
       fi
@@ -224,62 +153,26 @@ parse_list_line() {
 # $user: Nextcloud user
 # $insecure: Must be declared to make insecure upload (insecure="true")
 nc_upload_without_id() {
-  fileName=$(ls "$downloadDirectory" | grep "${lid}")
-  filePath="$downloadDirectory/$fileName"
+  fileName=$(ls "$nc_api_downloadDirectory" | grep "${lid}")
+  filePath="$nc_api_downloadDirectory/$fileName"
   nameWithoutID=$(echo "${fileName#*${lid}-}")
   # Upload video to nextcloud
-  ncp_upload_file -f "$filePath" -t "$lpath/$nameWithoutID" -p "$passfile" -u "$url" -n "$user" $($insecure && echo "-i") && rm "$filePath"
+  _upload_file="$filePath"
+  _upload_file_nc_path="$lpath/$nameWithoutID"
+  ncp_upload_file && rm "$filePath"
 
 }
 
 
 ncp_get_file() {
-  nc_reset_default_value
-help()
-{
-	echo "-t: file path in nextcloud"
-	echo "-p: file path to password (optional. Default is $passfile)"
-	echo "-u: url (optional. Default is $url)"
-	echo "-n: username (optional. Default is $user)"
-	echo "-i: use --insecure arg in curl for ignoring ssl error"
-}
 
-# flag with arg, use <c>:, put them first.
-# flag without arg, use <c> after flag with args.
-local OPTIND
-while getopts "t:p:u:n:ih" opt; do
-  case $opt in
-    t) # to file path
-	    ncppath="$OPTARG"
-    	;;
-    p) passfile="$OPTARG";;
-	    
-    u) url="$OPTARG";;
-
-    n) user="$OPTARG";;
-
-    i) insecure="true";;
-
-    h) help
-	exit;;
-
-    ?) echo "Invalid option -$OPTARG" >&2
-	help
-    	exit;;
-  esac
-done
-
-if [[ "$url" != http* ]] ; then 
-	url="https://$url"
+if [[ "$nc_api_url" != http* ]] ; then 
+	nc_api_url="https://$nc_api_url"
 fi
 
 
-pass=`cat $passfile`
-if [ -n "$insecure" ]; then
-	curl --insecure -X "GET" -u "$user:$pass" "$url/remote.php/dav/files/$user/$ncppath" 
-else
-	curl -X "GET" -u "$user:$pass" "$url/remote.php/dav/files/$user/$ncppath" 
-fi
+pass=`cat $nc_api_passfile`
+	curl "$nc_api_insecure" -X "GET" -u "$nc_api_user:$pass" "$nc_api_url/remote.php/dav/files/$nc_api_user/$_get_file" 
 }
 
 # Upload a file to ncp
@@ -290,69 +183,24 @@ fi
 # -n: username
 # -i: ignore ssl error
 ncp_upload_file() {
-nc_reset_default_value
-help()
-{
-	echo "-t: to - file path in nextcloud (optional, Starts at user folder)"
-	echo "-f: from - file path to upload"
-	echo "-p: file path to password (optional. Default is $passfile)"
-	echo "-u: url (optional. Default is $url)"
-	echo "-n: username (optional. Default is $user)"
-	echo "-i: use --insecure arg in curl for ignoring ssl error"
-}
-
-# flag with arg, use <c>:, put them first.
-# flag without arg, use <c> after flag with args.
-local OPTIND
-while getopts "f:t:p:u:n:ih" opt; do
-  case $opt in
-    f) # from file path
-	    filepath="$OPTARG"
-    	;;
-    t) # to file path
-	    uploadpath="$OPTARG"
-    	;;
-    p) passfile="$OPTARG";;
-	    
-    u) url="$OPTARG";;
-
-    n) user="$OPTARG";;
-
-    i) insecure="true";;
-
-    h) help
-	exit;;
-
-    ?) echo "Invalid option -$OPTARG" >&2
-	help
-    	exit;;
-  esac
-done
-
-if [ -z "$filepath" ]; then
-	echo "Need -f arg."
-	help
+if [ -z "$_upload_file" ]; then
+	echo "Need _upload_file arg."
 	exit
 fi
-if [[ "$url" != http* ]]; then 
-	url="https://$url"
+if [[ "$nc_api_url" != http* ]]; then 
+	nc_api_url="https://$nc_api_url"
 fi
 
-# Remove slash (/)
+# Remove sla-sh (/)
 #if [ $url == */ ]; then 
 #	url="$url"
 #fi
 
-echo "$url"
-echo "from: $filepath"
-echo "to: $uploadpath"
-echo "curl command $url/remote.php/dav/files/$user/$uploadpath -T $filepath"
+echo "$nc_api_url"
+echo "from: $_upload_file"
+echo "to: $_upload_file_nc_path"
+echo "curl command $nc_api_url/remote.php/dav/files/$nc_api_user/$_upload_file_nc_path -T $_upload_file"
 pass=`cat $passfile`
-if [ -n "$insecure" ]; then
-	echo "insecure option activated"
-	curl --insecure -X "PUT" -u "$user:$pass" "$url/remote.php/dav/files/$user/$uploadpath" -T "$filepath"
-else
-	curl -X "PUT" -u "$user:$pass" "$url/remote.php/dav/files/$user/$uploadpath" -T "$filepath"
-fi
+	curl "nc_api_insecure" -X "PUT" -u "$nc_api_user:$pass" "$nc_api_url/remote.php/dav/files/$nc_api_user/$_upload_file_nc_path" -T "$_upload_file"
 echo "done."
 }
