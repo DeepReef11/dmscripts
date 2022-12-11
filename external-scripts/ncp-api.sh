@@ -19,6 +19,7 @@ nc_reset_default_value() {
   url="192.168.0.199"
   delimiter=", "
   downloadDirectory="${HOME}/nc/wget"
+  insecure=""
 }
 
 # This function use a list of file url to download a file and upload it
@@ -41,6 +42,7 @@ download_file_from_list_with_wget() {
 
 # flag with arg, use <c>:, put them first.
 # flag without arg, use <c> after flag with args.
+local OPTIND o a
 while getopts "l:p:u:n:ih" opt; do
   case $opt in
     l) listpath="$OPTARG";;
@@ -71,9 +73,9 @@ if [ -z "$listpath" ]; then
 	help
 	exit
 fi
-listfile=$(ncp_get_file -t "$listpath" -p "$passfile" -u "$url" -n "$user" $($insecure && echo "-i"))
+listfile=$(ncp_get_file -t "$listpath" -p "$passfile" -u "$url" -n "$user" $("$insecure" && echo "-i"))
 uncompletedListFile="$listfile"
-  if [ -n $listfile ] ; then
+  if [ -n "$listfile" ] ; then
     while IFS= read -r line; do
     parse_list_line
     if [ -n "$lurl" ] ; then
@@ -124,6 +126,7 @@ download_video_from_list() {
 
 # flag with arg, use <c>:, put them first.
 # flag without arg, use <c> after flag with args.
+local OPTIND o a
 while getopts "l:p:u:n:ih" opt; do
   case $opt in
     l) listpath="$OPTARG";;
@@ -156,7 +159,7 @@ if [ -z "$listpath" ]; then
 fi
 listfile=$(ncp_get_file -t "$listpath" -p "$passfile" -u "$url" -n "$user" $($insecure && echo "-i"))
 uncompletedListFile="$listfile"
-  if [ -n $listfile ] ; then
+  if [ -n "$listfile" ] ; then
     while IFS= read -r line; do
     parse_list_line
     if [ -n "$lurl" ] ; then
@@ -177,7 +180,7 @@ uncompletedListFile="$listfile"
           Content:
           $(cat $localListFilePath)
           End of content." &&
-          ncp_upload_file -f "$localListFilePath" -t "${listpath}" -p "$passfile" -u "$url" -n "$user" $($insecure && echo "-i") &&  echo "Updated listfile" 
+          ncp_upload_file -f "$localListFilePath" -t "${listpath}" -p "$passfile" -u "$url" -n "$user" $("$insecure" && echo "-i") &&  echo "Updated listfile" 
 
         fi
       fi
@@ -243,6 +246,7 @@ help()
 
 # flag with arg, use <c>:, put them first.
 # flag without arg, use <c> after flag with args.
+local OPTIND o a
 while getopts "t:p:u:n:ih" opt; do
   case $opt in
     t) # to file path
@@ -271,7 +275,7 @@ fi
 
 
 pass=`cat $passfile`
-if [ ! -z "$insecure" ]; then
+if [ -n "$insecure" ]; then
 	curl --insecure -X "GET" -u "$user:$pass" "$url/remote.php/dav/files/$user/$ncppath" 
 else
 	curl -X "GET" -u "$user:$pass" "$url/remote.php/dav/files/$user/$ncppath" 
@@ -299,6 +303,7 @@ help()
 
 # flag with arg, use <c>:, put them first.
 # flag without arg, use <c> after flag with args.
+local OPTIND o a
 while getopts "f:t:p:u:n:ih" opt; do
   case $opt in
     f) # from file path
@@ -343,7 +348,7 @@ echo "from: $filepath"
 echo "to: $uploadpath"
 echo "curl command $url/remote.php/dav/files/$user/$uploadpath -T $filepath"
 pass=`cat $passfile`
-if [ ! -z "$insecure" ]; then
+if [ -n "$insecure" ]; then
 	echo "insecure option activated"
 	curl --insecure -X "PUT" -u "$user:$pass" "$url/remote.php/dav/files/$user/$uploadpath" -T "$filepath"
 else
