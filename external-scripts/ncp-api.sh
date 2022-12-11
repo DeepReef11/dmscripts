@@ -42,7 +42,7 @@ download_file_from_list_with_wget() {
 
 # flag with arg, use <c>:, put them first.
 # flag without arg, use <c> after flag with args.
-local OPTIND o a
+local OPTIND 
 while getopts "l:p:u:n:ih" opt; do
   case $opt in
     l) listpath="$OPTARG";;
@@ -126,7 +126,7 @@ download_video_from_list() {
 
 # flag with arg, use <c>:, put them first.
 # flag without arg, use <c> after flag with args.
-local OPTIND o a
+local OPTIND
 while getopts "l:p:u:n:ih" opt; do
   case $opt in
     l) listpath="$OPTARG";;
@@ -246,7 +246,7 @@ help()
 
 # flag with arg, use <c>:, put them first.
 # flag without arg, use <c> after flag with args.
-local OPTIND o a
+local OPTIND
 while getopts "t:p:u:n:ih" opt; do
   case $opt in
     t) # to file path
@@ -303,7 +303,7 @@ help()
 
 # flag with arg, use <c>:, put them first.
 # flag without arg, use <c> after flag with args.
-local OPTIND o a
+local OPTIND
 while getopts "f:t:p:u:n:ih" opt; do
   case $opt in
     f) # from file path
