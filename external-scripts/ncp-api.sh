@@ -69,35 +69,33 @@ if [ -z "$listpath" ]; then
 fi
 listfile=$(ncp_get_file -t "$listpath" -p "$passfile" -u "$url" -n "$user" $($insecure && echo "-i"))
 uncompletedListFile="$listfile"
-while IFS= read -r line; do
-  parse_list_line
-  if [ -n "$lurl" ] ; then
-  #sudo /usr/local/bin/youtube-dl -f 18 "${lurl}" --cookie 'cookie.txt' -o "/media/kingston/download/video/%(upload_date)s-[%(uploader)s]-%(title)s.%(ext)s"
-  # could be needed to use full path of youtube-dl
-  youtube-dl --restrict-filenames -f 18 "${lurl}" -o "${downloadDirectory}/${lid}-%(upload_date)s-%(uploader)s-%(title)s.%(ext)s" && echo "here" && ytcompleted="true"
-  echo "yt completed $ytcompleted."
-    if [ "$ytcompleted" = "true" ] ; then
-      echo "moving ${lid} to ${lpath} in nextcloud"
-      nc_upload_without_id
-      echo "removing $line from list..."
-      uncompletedListFile=$(echo "$listfile" | sed "/$lid/d") 
-      localListFilePath="${downloadDirectory}/$(basename $listpath)"
-      listfile="$uncompletedListFile"
-      rm -f $localListFilePath
-      echo "$uncompletedListFile" > "$localListFilePath" && 
-      echo "Uploading list file: $localListFilePath to: $listpath .
-      Content:
-      $(cat $localListFilePath)
-      End of content." &&
-      ncp_upload_file -f "$localListFilePath" -t "${listpath}" -p "$passfile" -u "$url" -n "$user" $($insecure && echo "-i") &&  echo "Updated listfile" 
+  if [ -n $listfile ] ; then
+    while IFS= read -r line; do
+    parse_list_line
+    if [ -n "$lurl" ] ; then
+      #sudo /usr/local/bin/youtube-dl -f 18 "${lurl}" --cookie 'cookie.txt' -o "/media/kingston/download/video/%(upload_date)s-[%(uploader)s]-%(title)s.%(ext)s"
+      # could be needed to use full path of youtube-dl
+      youtube-dl --restrict-filenames -f 18 "${lurl}" -o "${downloadDirectory}/${lid}-%(upload_date)s-%(uploader)s-%(title)s.%(ext)s" && echo "here" && ytcompleted="true"
+      echo "yt completed $ytcompleted."
+        if [ "$ytcompleted" = "true" ] ; then
+          echo "moving ${lid} to ${lpath} in nextcloud"
+          nc_upload_without_id
+          echo "removing $line from list..."
+          uncompletedListFile=$(echo "$listfile" | sed "/$lid/d") 
+          localListFilePath="${downloadDirectory}/$(basename $listpath)"
+          listfile="$uncompletedListFile"
+          rm -f $localListFilePath
+          echo "$uncompletedListFile" > "$localListFilePath" && 
+          echo "Uploading list file: $localListFilePath to: $listpath .
+          Content:
+          $(cat $localListFilePath)
+          End of content." &&
+          ncp_upload_file -f "$localListFilePath" -t "${listpath}" -p "$passfile" -u "$url" -n "$user" $($insecure && echo "-i") &&  echo "Updated listfile" 
 
-      
-
-   fi
-  
-  fi
-
-done <<< "$listfile"
+        fi
+      fi
+    fi
+  done <<< "$listfile"
 }
 
 # Take a list file line and parse it.

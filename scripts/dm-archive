@@ -12,16 +12,10 @@ fi
 
 source "$(get_config)"
 
-select_path() {
-echo 1	
-}
-
-
 saveSinglePageWget() {
 	filepath=$(file_explorer)  # TODO: a start path for archives could be added in config. 
 	wget -E -H -k -K -nd -N -p -P "$filepath/$dirname" \
-	  $clip
-	
+  $clip	
 }
 
 saveWebPage() {
@@ -37,7 +31,7 @@ saveWebPage() {
 
 downloadYtNcp() {
 	#     var regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
- 	fileYtNcpList="${ncp_local_dir}/${ncp_downloadlists_dir}/ytncp.txt"
+ 	fileYtNcpList="${ncp_local_dir}/${ncp_downloadlists_dir}/${nc_youtube_list_file}"
 	touch "$fileYtNcpList"
 	line=$(head -n1 "$fileYtNcpList")
 	if [ "$line" != "$downloadListsStructure" ] ; then
