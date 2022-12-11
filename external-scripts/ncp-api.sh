@@ -19,21 +19,21 @@
 #
 download_video_from_list() {
   passfile="${HOME}/workspace/token/fu.txt"
-  listpath="shared-folder/download-queue/ytncp.txt"
-user="fu"
-url="192.168.0.199"
-delimiter=", "
-downloadDirectory="${HOME}/nc/yt-dl"
-help()
-{
-	echo "-l: file path to video list in nextcloud. Default is $listpath"
-  echo "-s: Default directory to store file. Default is $downloadDirectory"
-	echo "-d: Delimiter used in video list. Default is $delimiter"
-	echo "-p: file path to password (optional. Default is $passfile)"
-	echo "-u: url (optional. Default is $url)"
-	echo "-n: username (optional. Default is $user)"
-	echo "-i: use --insecure arg in curl for ignoring ssl error"
-}
+  listpath="shared-folder/download-queue/youtube.txt"
+  user="fu"
+  url="192.168.0.199"
+  delimiter=", "
+  downloadDirectory="${HOME}/nc/yt-dl"
+  help()
+  {
+	  echo "-l: file path to video list in nextcloud. Default is $listpath"
+    echo "-s: Default directory to store file. Default is $downloadDirectory"
+	  echo "-d: Delimiter used in video list. Default is $delimiter"
+	  echo "-p: file path to password (optional. Default is $passfile)"
+	  echo "-u: url (optional. Default is $url)"
+	  echo "-n: username (optional. Default is $user)"
+	  echo "-i: use --insecure arg in curl for ignoring ssl error"
+  }
 
 # flag with arg, use <c>:, put them first.
 # flag without arg, use <c> after flag with args.
@@ -70,39 +70,18 @@ fi
 listfile=$(ncp_get_file -t "$listpath" -p "$passfile" -u "$url" -n "$user" $($insecure && echo "-i"))
 uncompletedListFile="$listfile"
 while IFS= read -r line; do
-  lurl=""
-  lpath=""
-  lid=""
   parse_list_line
   if [ -n "$lurl" ] ; then
-  # trimmed=$(echo "$line" | xargs)
-  # if [ -n "$trimmed" ] && [[ "$trimmed" != "#"*  ]] ; then
-  #   newarray=()
-    # string="$line$delimiter"
-    # while [[ "$string"  ]]; do
-      # newarray+=( "${string%%"$delimiter"*}" )
-      # string=${string#*"$delimiter"}
-  #done
-  #echo "1: ${newarray[1]}, 2: ${newarray[2]}, 3: ${newarray[3]}"   
-  #lurl="${newarray[1]}"
-  #lid="${newarray[2]}"
-  #lpath="${newarray[3]}"
   #sudo /usr/local/bin/youtube-dl -f 18 "${lurl}" --cookie 'cookie.txt' -o "/media/kingston/download/video/%(upload_date)s-[%(uploader)s]-%(title)s.%(ext)s"
   # could be needed to use full path of youtube-dl
   youtube-dl --restrict-filenames -f 18 "${lurl}" -o "${downloadDirectory}/${lid}-%(upload_date)s-%(uploader)s-%(title)s.%(ext)s" && echo "here" && ytcompleted="true"
   echo "yt completed $ytcompleted."
     if [ "$ytcompleted" = "true" ] ; then
       echo "moving ${lid} to ${lpath} in nextcloud"
-      #videoFileName=$(ls "$downloadDirectory" | grep "${lid}")
-      #videoFilePath="$downloadDirectory/$videoFileName"
-      #nameWithoutID=$(echo "${videoFileName#*${lid}-}")
-      # Upload video to nextcloud
-      #echo "Uploading video: $videoFilePath to: $lpath/$nameWithoutID"
-      #ncp_upload_file -f "$videoFilePath" -t "$lpath/$nameWithoutID" -p "$passfile" -u "$url" -n "$user" $($insecure && echo "-i") && rm "$videoFilePath"
       nc_upload_without_id
       echo "removing $line from list..."
       uncompletedListFile=$(echo "$listfile" | sed "/$lid/d") 
-      localListFilePath="${downloadDirectory}/ytncp.txt"
+      localListFilePath="${downloadDirectory}/$(basename $listpath)"
       listfile="$uncompletedListFile"
       rm -f $localListFilePath
       echo "$uncompletedListFile" > "$localListFilePath" && 
@@ -130,6 +109,9 @@ done <<< "$listfile"
 # $lpath: path to nextcloud
 #
 parse_list_line() {
+  lurl=""
+  lpath=""
+  lid=""
   trimmed=$(echo "$line" | xargs)
   if [ -n "$trimmed" ] && [[ "$trimmed" != "#"*  ]] ; then
     newarray=()
