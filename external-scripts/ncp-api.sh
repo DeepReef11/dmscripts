@@ -13,6 +13,95 @@
 
 # arg is path to file and file path
 
+# This function use a list of file url to download a file and upload it
+# to the entered path in nextcloud
+# The file is used as follow:
+# ${url}${delimiter}${id}${delimiter}${filepath}
+#
+download_file_from_list_with_wget() {
+  passfile="${HOME}/workspace/token/fu.txt"
+  listpath="shared-folder/download-queue/wget.txt"
+  user="fu"
+  url="192.168.0.199"
+  delimiter=", "
+  downloadDirectory="${HOME}/nc/wget"
+  help()
+  {
+	  echo "-l: file path to file list in nextcloud. Default is $listpath"
+    echo "-s: Default directory to store file. Default is $downloadDirectory"
+	  echo "-d: Delimiter used in video list. Default is $delimiter"
+	  echo "-p: file path to password (optional. Default is $passfile)"
+	  echo "-u: url (optional. Default is $url)"
+	  echo "-n: username (optional. Default is $user)"
+	  echo "-i: use --insecure arg in curl for ignoring ssl error"
+  }
+
+# flag with arg, use <c>:, put them first.
+# flag without arg, use <c> after flag with args.
+while getopts "l:p:u:n:ih" opt; do
+  case $opt in
+    l) listpath="$OPTARG";;
+
+    d) delimiter="$OPTARG";;
+
+    s) downloadDirectory="$OPTARG";;
+
+    p) passfile="$OPTARG";;
+	    
+    u) url="$OPTARG";;
+
+    n) user="$OPTARG";;
+
+    i) insecure="true";;
+
+    h) help
+       exit;;
+
+    ?)  echo "Invalid option -$OPTARG" >&2
+        help
+    	  exit;;
+  esac
+done
+mkdir -p "$downloadDirectory"
+if [ -z "$listpath" ]; then
+	echo "Need -l arg."
+	help
+	exit
+fi
+listfile=$(ncp_get_file -t "$listpath" -p "$passfile" -u "$url" -n "$user" $($insecure && echo "-i"))
+uncompletedListFile="$listfile"
+  if [ -n $listfile ] ; then
+    while IFS= read -r line; do
+    parse_list_line
+    if [ -n "$lurl" ] ; then
+      #sudo /usr/local/bin/youtube-dl -f 18 "${lurl}" --cookie 'cookie.txt' -o "/media/kingston/download/video/%(upload_date)s-[%(uploader)s]-%(title)s.%(ext)s"
+      # could be needed to use full path of youtube-dl
+      completed="false"
+      filename=$(basename "$lurl")
+      wget -c "$lurl" -O "${downloadDirectory}/${lid}-$filename" && completed="true"
+      #youtube-dl --restrict-filenames -f 18 "${lurl}" -o "${downloadDirectory}/${lid}-%(upload_date)s-%(uploader)s-%(title)s.%(ext)s" && echo "here" && completed="true"
+      echo "Completed $completed."
+        if [ "$completed" = "true" ] ; then
+          echo "moving ${lid} to ${lpath} in nextcloud"
+          nc_upload_without_id
+          echo "removing $line from list..."
+          uncompletedListFile=$(echo "$listfile" | sed "/$lid/d") 
+          localListFilePath="${downloadDirectory}/$(basename $listpath)"
+          listfile="$uncompletedListFile"
+          rm -f $localListFilePath
+          echo "$uncompletedListFile" > "$localListFilePath" && 
+          echo "Uploading list file: $localListFilePath to: $listpath .
+          Content:
+          $(cat $localListFilePath)
+          End of content." &&
+          ncp_upload_file -f "$localListFilePath" -t "${listpath}" -p "$passfile" -u "$url" -n "$user" $($insecure && echo "-i") &&  echo "Updated listfile" 
+
+        fi
+      fi
+    done <<< "$listfile"
+  fi
+}
+
 # This function use a list of video url to download  
 # The file is used as follow:
 # ${url}${delimiter}${id}${delimiter}${filepath}

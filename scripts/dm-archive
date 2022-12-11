@@ -29,30 +29,52 @@ saveWebPage() {
 		esac
 }
 
-downloadYtNcp() {
-	#     var regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
- 	fileYtNcpList="${ncp_local_dir}/${ncp_downloadlists_dir}/${nc_youtube_list_file}"
-	touch "$fileYtNcpList"
-	line=$(head -n1 "$fileYtNcpList")
-	if [ "$line" != "$downloadListsStructure" ] ; then
-		echo "$downloadListsStructure
-		$(cat $fileYtNcpList)" > "$fileYtNcpList"
-	fi
-  id=$(uuidgen)
-	filepath=$(file_explorer "$ncp_local_dir")  
-  filepath=$(string_remove_to_index_of_string "$filepath" "$ncp_local_dir")
-  echo "$clip${delimiter}$id${delimiter}$filepath" >> "$fileYtNcpList"
+# This needs nextcloud client to be working to upload listfile to nextcloud.
+# param:
+# $listfile: filepath to local nextcloud directory. ex:
+# fileList="${ncp_local_dir}/${ncp_downloadlists_dir}/${nc_youtube_list_file}"
+create_or_append_to_local_nc_filelist() {
+  if [ -n "$listFile" ] ; then
+  	downloadListsStructure="# url${delimiter}id${delimiter}path" 
+  	touch "$listFile"
+  	line=$(head -n1 "$listFile")
+	  if [ "$line" != "$downloadListsStructure" ] ; then
+		  echo "$downloadListsStructure
+		  $(cat $listFile)" > "$listFile"
+	  fi
+    id=$(uuidgen)
+	  filepath=$(file_explorer "$ncp_local_dir")  
+    filepath=$(string_remove_to_index_of_string "$filepath" "$ncp_local_dir")
+    echo "$clip${delimiter}$id${delimiter}$filepath" >> "$listFile"
+  else
+    echo "listFile argument required"
+  fi
 }
 
 downloadVideo() {
 	
-	downloadListsStructure="# url${delimiter}id${delimiter}path" 
   txtYtNcp="Yt-dl to Ncp"
 	choice=$(echo -e "${txtYtNcp}\n" | ${DMENU} "$txtDownloadVideo: ")
 	case $choice in
 		$txtYtNcp)
 			echo "$txtYtNcp"
-			downloadYtNcp
+      listFile="${ncp_local_dir}/${ncp_downloadlists_dir}/${nc_youtube_list_file}"
+		  create_or_append_to_local_nc_filelist	
+			;;
+		esac
+
+}
+
+
+downloadFile() {
+	
+  txtWgetNc="wget to Nc"
+	choice=$(echo -e "${txtWgetNc}\n" | ${DMENU} "$txtDownloadFile: ")
+	case $choice in
+		$txtWgetNc)
+			echo "$txtWgetNc"
+      listFile="${ncp_local_dir}/${ncp_downloadlists_dir}/${nc_wget_list_file}"
+      create_or_append_to_local_nc_filelist
 			;;
 		esac
 
@@ -80,6 +102,7 @@ case $choice in
 		;;
 	$txtDownloadFile)
 		echo "$txtDownloadFile"
+    downloadFile
 		;;
 esac
 
