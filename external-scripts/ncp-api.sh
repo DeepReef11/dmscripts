@@ -11,19 +11,26 @@
 #IFS= read -sr "?Enter a password: " password
 #read "?Path to file: " filepath
 
-
+config_init() {
 nc_api_passfile="${HOME}/workspace/token/fu.txt"
 nc_api_listpath="shared-folder/download-queue" #/wget.txt"
 nc_api_user="fu"
 nc_api_url="192.168.0.199"
 nc_api_delimiter=", "
+
 nc_api_downloadDirectory="${HOME}/nc"
+mkdir -p "$nc_api_downloadDirectory"
+
 nc_api_insecure="" # --insecure
 nc_wget_list_file="wget.txt"
 nc_yt_list_file="youtube.txt"
+local_yt_log_file="${nc_api_downloadDirectory}/yt-log.txt"
+local_wget_log_file="${nc_api_downloadDirectory}/wget-log.txt"
+# function arg var
 _get_file=""
 _upload_file=""
 _upload_file_nc_path=""
+}
 # This function use a list of file url to download a file and upload it
 # to the entered path in nextcloud
 # The file is used as follow:
@@ -47,7 +54,7 @@ uncompletedListFile="$listfile"
     if [ -n "$lurl" ] ; then
       completed="false"
       filename=$(basename "$lurl")
-      wget -c "$lurl" -O "${nc_api_downloadDirectory}/${lid}-$filename" && completed="true"
+      wget -c "$lurl" -O "${nc_api_downloadDirectory}/${lid}-$filename" > "$local_wget_log_file" && completed="true" 
       echo "Completed $completed."
         if [ "$completed" = "true" ] ; then
           echo "moving ${lid} to ${lpath} in nextcloud"
@@ -204,3 +211,5 @@ pass=`cat $nc_api_passfile`
 	curl "$nc_api_insecure" -X "PUT" -u "$nc_api_user:$pass" "$nc_api_url/remote.php/dav/files/$nc_api_user/$_upload_file_nc_path" -T "$_upload_file"
 echo "done."
 }
+
+config_init
