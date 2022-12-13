@@ -69,6 +69,9 @@ uncompletedListFile="$listfile"
           localListFilePath="${nc_api_downloadDirectory}/${nc_wget_list_file}"
           listfile="$uncompletedListFile"
           rm -f $localListFilePath
+          myvar="dd"
+           myvar="ff"
+
           echo "$uncompletedListFile" > "$localListFilePath" && 
           echo "Uploading list file: $localListFilePath to: $listpath .
           Content:
@@ -114,16 +117,16 @@ uncompletedListFile="$listfile"
           echo "removing $line from list..."
           uncompletedListFile=$(echo "$listfile" | sed "/$lid/d") 
           localListFilePath="${nc_api_downloadDirectory}/$nc_yt_list_file"
-          rm -f $localListFilePath
-          echo "$uncompletedListFile" > "$localListFilePath" && 
-          echo "Uploading list file: $localListFilePath to: $listpath .
+          rm -f "$local_yt_log_file"
+          echo "$uncompletedListFile" > "$local_yt_log_file" && 
+          echo "Uploading list file: $localListFilePath to: $nc_api_listpath/$nc_yt_list_file .
           Content:
           $(cat $localListFilePath)
           End of content." &&
           _upload_file="$localListFilePath" &&
           _upload_file_nc_path="$nc_api_listpath/$nc_yt_list_file" &&
           ncp_upload_file &&  echo "Updated listfile" 
-
+ 
         fi
       fi
     done <<< "$listfile"
