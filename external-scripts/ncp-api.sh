@@ -7,6 +7,11 @@
 # read with zsh: https://superuser.com/questions/555874/zsh-read-command-fails-within-bash-function-read1-p-no-coprocess
 # Upload file to nextlcoud through api: https://linuxfun.org/en/2021/07/02/nextcloud-operation-api-with-curl-en/
 #
+# youtube-dl must be installed properly for crontab root (sudo crontab -e)
+#sudo apt remove youtube-dl
+#sudo apt install python3-pip
+#python3 -m pip install youtube-dl
+
 
 #IFS= read -sr "?Enter a password: " password
 #read "?Path to file: " filepath
@@ -100,9 +105,10 @@ uncompletedListFile="$listfile"
     if [ -n "$lurl" ] ; then
       #sudo /usr/local/bin/youtube-dl -f 18 "${lurl}" --cookie 'cookie.txt' -o "/media/kingston/download/video/%(upload_date)s-[%(uploader)s]-%(title)s.%(ext)s"
       # could be needed to use full path of youtube-dl
-      youtube-dl --restrict-filenames -f 18 "${lurl}" -o "${nc_api_downloadDirectory}/${lid}-%(upload_date)s-%(uploader)s-%(title)s.%(ext)s" && ytcompleted="true"
-      echo "yt completed $ytcompleted."
-        if [ "$ytcompleted" = "true" ] ; then
+      completed="false"
+      sudo /usr/local/bin/youtube-dl "${lurl}" --restrict-filenames -c -f 18 -o "${nc_api_downloadDirectory}/${lid}-%(upload_date)s-%(uploader)s-%(title)s.%(ext)s" > "$local_yt_log_file" && completed="true"
+      echo "yt completed $completed."
+        if [ "$completed" = "true" ] ; then
           echo "moving ${lid} to ${lpath} in nextcloud"
           nc_upload_without_id
           echo "removing $line from list..."
