@@ -33,8 +33,10 @@ local_wget_list_file="$local_download_directory/wget.txt"
 local_completed_list_file="$local_download_directory/completed.txt"
 touch "$local_yt_list_file" "$local_wget_list_file" "$local_yt_log_file" "$local_wget_log_file"
 rm -f "$local_completed_list_file"
-nc_get_file "$nc_api_completed_list_file" > "$local_completed_list_file" || touch "$local_completed_list_file"
-
+touch "$local_completed_list_file"
+local content
+content=$(nc_get_file "$nc_api_completed_list_file")
+echo "$content" >> "$local_completed_list_file"
 local_yt_log_file="${local_download_directory}/yt-log.txt"
 local_wget_log_file="${local_download_directory}/wget-log.txt"
 }
