@@ -21,71 +21,57 @@ nc_api_passfile="${HOME}/workspace/token/fu.txt"
 nc_api_listpath="shared-folder/download-queue" #/wget.txt"
 nc_api_user="fu"
 nc_api_url="192.168.0.199"
-nc_api_delimiter=", "
-
-nc_api_downloadDirectory="${HOME}/nc"
-mkdir -p "$nc_api_downloadDirectory"
-
+nc_api_list_delimiter=", "
 nc_api_insecure="" # --insecure
-nc_wget_list_file="wget.txt"
-nc_yt_list_file="youtube.txt"
-local_yt_log_file="${nc_api_downloadDirectory}/yt-log.txt"
-local_wget_log_file="${nc_api_downloadDirectory}/wget-log.txt"
-# function arg var
-_get_file=""
-_upload_file=""
-_upload_file_nc_path=""
+nc_api_yt_list_file="$nc_api_listpath/youtube.txt"
+nc_api_wget_list_file="$nc_api_listpath/wget.txt"
+nc_api_completed_list_file="$nc_api_listpath/completed.txt"
+
+local_download_directory="${HOME}/nc"
+mkdir -p "$local_download_directory"
+local_yt_list_file="$local_download_directory/youtube.txt"
+local_wget_list_file="$local_download_directory/wget.txt"
+local_completed_list_file="$local_download_directory/completed.txt"
+touch "$local_yt_list_file" "$local_wget_list_file" "$local_yt_log_file" "$local_wget_log_file"
+rm -f "$local_completed_list_file"
+nc_get_file "$nc_api_completed_list_file" > "$local_completed_list_file" || touch "$local_completed_list_file"
+
+local_yt_log_file="${local_download_directory}/yt-log.txt"
+local_wget_log_file="${local_download_directory}/wget-log.txt"
 }
+
 # This function use a list of file url to download a file and upload it
 # to the entered path in nextcloud
 # The file is used as follow:
 # ${url}${delimiter}${id}${delimiter}${filepath}
-#
 download_file_from_list_with_wget() {
-
-# flag with arg, use <c>:, put them first.
-# flag without arg, use <c> after flag with args.
-mkdir -p "$nc_api_downloadDirectory"
-if [ -z "$nc_api_listpath" ]; then
-	echo "nc_api_listpath is empty"
-	exit
-fi
-_get_file="$nc_api_listpath/$nc_wget_list_file"
-listfile=$(ncp_get_file) 
-uncompletedListFile="$listfile"
-  if [ -n "$listfile" ] ; then
-    while IFS= read -r line; do
-    parse_list_line
-    if [ -n "$lurl" ] ; then
-      completed="false"
-      filename=$(basename "$lurl")
-      wget -c "$lurl" -O "${nc_api_downloadDirectory}/${lid}-$filename" > "$local_wget_log_file" && completed="true" 
-      echo "Completed $completed."
+  if [ -z "$nc_api_listpath" ]; then
+	  echo "nc_api_listpath is empty"
+	  exit
+  fi
+  local listfile
+  listfile=$(nc_get_file "$nc_api_wget_list_file") 
+    if [ -n "$listfile" ] ; then
+      while IFS= read -r line; do
+      parse_list_line
+      if [ -n "$lurl" ] ; then
+        local completed="false"
+        local filename
+        filename=$(basename "$lurl")
+        wget -c "$lurl" -O "${local_download_directory}/$filename" > "$local_wget_log_file" && completed="true" 
+        echo "Completed $completed."
         if [ "$completed" = "true" ] ; then
-          echo "moving ${lid} to ${lpath} in nextcloud"
-          nc_upload_without_id
-          echo "removing $line from list..."
-          uncompletedListFile=$(echo "$listfile" | sed "/$lid/d") 
-          localListFilePath="${nc_api_downloadDirectory}/${nc_wget_list_file}"
-          listfile="$uncompletedListFile"
-          rm -f $localListFilePath
-          myvar="dd"
-           myvar="ff"
-
-          echo "$uncompletedListFile" > "$localListFilePath" && 
-          echo "Uploading list file: $localListFilePath to: $listpath .
-          Content:
-          $(cat $localListFilePath)
-          End of content." &&
-          _upload_file="$localListFilePath" &&
-          _upload_file_nc_path="$nc_api_listpath/$nc_wget_list_file" &&
-          ncp_upload_file &&  echo "Updated listfile" 
-
+          nc_upload_file -f "$local_download_directory/$filename" -t "$lpath/$filename" &&
+          completed_list_line "$nc_api_wget_list_file" "$local_wget_list_file" "$lurl" &&
+          rm -f "$local_download_directory/$filename"
         fi
       fi
     done <<< "$listfile"
   fi
 }
+
+
+
 
 # This function use a list of video url to download  
 # The file is used as follow:
@@ -93,44 +79,58 @@ uncompletedListFile="$listfile"
 #
 download_video_from_list() {
 
-mkdir -p "$nc_api_downloadDirectory"
 if [ -z "$nc_api_listpath" ]; then
 	echo "Need listpath arg."
-	help
 	exit
 fi
-_get_file="$nc_api_listpath/$nc_yt_list_file"
-listfile=$(ncp_get_file) 
-uncompletedListFile="$listfile"
+local listfile
+listfile=$(nc_get_file "$nc_api_listpath/$nc_api_yt_list_file") 
   if [ -n "$listfile" ] ; then
     while IFS= read -r line; do
     parse_list_line
     if [ -n "$lurl" ] ; then
       #sudo /usr/local/bin/youtube-dl -f 18 "${lurl}" --cookie 'cookie.txt' -o "/media/kingston/download/video/%(upload_date)s-[%(uploader)s]-%(title)s.%(ext)s"
       # could be needed to use full path of youtube-dl
-      completed="false"
-      sudo /usr/local/bin/youtube-dl "${lurl}" --restrict-filenames -c -f 18 -o "${nc_api_downloadDirectory}/${lid}-%(upload_date)s-%(uploader)s-%(title)s.%(ext)s" > "$local_yt_log_file" && completed="true"
+      local completed="false"
+      sudo /usr/local/bin/youtube-dl "${lurl}" --restrict-filenames -c -f 18 -o "${local_download_directory}/%(upload_date)s-%(uploader)s-%(title)s.%(ext)s" >> "$local_yt_log_file" && completed="true" 
       echo "yt completed $completed."
         if [ "$completed" = "true" ] ; then
-          echo "moving ${lid} to ${lpath} in nextcloud"
-          nc_upload_without_id
-          echo "removing $line from list..."
-          uncompletedListFile=$(echo "$listfile" | sed "/$lid/d") 
-          localListFilePath="${nc_api_downloadDirectory}/$nc_yt_list_file"
-          rm -f "$local_yt_log_file"
-          echo "$uncompletedListFile" > "$local_yt_log_file" && 
-          echo "Uploading list file: $localListFilePath to: $nc_api_listpath/$nc_yt_list_file .
-          Content:
-          $(cat $localListFilePath)
-          End of content." &&
-          _upload_file="$localListFilePath" &&
-          _upload_file_nc_path="$nc_api_listpath/$nc_yt_list_file" &&
-          ncp_upload_file &&  echo "Updated listfile" 
- 
+
+          local file_name=$(youtube-dl "${url}" --restrict-filenames | jq '._filename')
+          local file_path="$local_download_directory/$file_name"
+          # upload video to nc
+          nc_upload_file -f "$file_path" -t "$lpath/$file_name" && 
+          completed_list_line "$nc_api_yt_list_file" "$local_yt_list_file" "$lurl" &&
+          rm -f "$file_path"
         fi
       fi
     done <<< "$listfile"
   fi
+}
+
+# Download list file, remove line then upload list file back. It should prevent removing newly added line while downloading files.
+# param:
+# $1: nc path to list file
+# $2: local path to list file
+# $3: string to remove. Usually the url of the file.
+completed_list_line() {
+  local nc_list_path="$1"
+  local local_list_path="$2"
+  local to_remove="$3"
+  if [ -z "$nc_list_path" ] || [ -z "$ro_remove" ] ; then
+    echo "Arguments not provided."
+    exit
+  fi
+  local list_file
+  list_file=$(nc_get_file "$list_path") 
+  local uncompleted_list_file
+  uncompleted_list_file=$(echo "$list_file" | sed "/$to_remove/d") 
+  rm -f "$local_list_path"
+  echo "$uncompleted_list_file" > "$local_list_path" &&
+  nc_upload_file -f "$local_list_path" -t "$nc_list_path" && echo "Updated $nc_list_path"
+  echo "$list_file" | grep "$to_remove" >> "$local_completed_list_file" &&
+  nc_upload_file -f "$local_completed_list_file" -t $nc_api_completed_list_file && echo "Updated $nc_api_completed_list_file"
+
 }
 
 # Take a list file line and parse it.
@@ -148,10 +148,10 @@ parse_list_line() {
   trimmed=$(echo "$line" | xargs)
   if [ -n "$trimmed" ] && [[ "$trimmed" != "#"*  ]] ; then
     newarray=()
-    string="$line$nc_api_delimiter"
+    string="$line$nc_api_list_delimiter"
     while [[ "$string"  ]]; do
-      newarray+=( "${string%%"$nc_api_delimiter"*}" )
-      string=${string#*"$nc_api_delimiter"}
+      newarray+=( "${string%%"$nc_api_list_delimiter"*}" )
+      string=${string#*"$nc_api_list_delimiter"}
     done
     lurl="${newarray[0]}"
     lid="${newarray[1]}"
@@ -169,19 +169,17 @@ parse_list_line() {
 # $user: Nextcloud user
 # $insecure: Must be declared to make insecure upload (insecure="true")
 nc_upload_without_id() {
-  fileName=$(ls "$nc_api_downloadDirectory" | grep "${lid}")
-  filePath="$nc_api_downloadDirectory/$fileName"
-  nameWithoutID=$(echo "${fileName#*${lid}-}")
+  local fileName=$(ls "$local_download_directory" | grep "${lid}")
+  local filePath="$local_download_directory/$fileName"
+  local nameWithoutID=$(echo "${fileName#*${lid}-}")
   # Upload video to nextcloud
-  _upload_file="$filePath"
-  _upload_file_nc_path="$lpath/$nameWithoutID"
-  ncp_upload_file && rm "$filePath"
 
+  nc_upload_file -f "$filepath" -t "$lpath/$nameWithoutID" && rm "$filePath"
 }
 
 
-ncp_get_file() {
-
+nc_get_file() {
+local _get_file = "$1"
 if [[ "$nc_api_url" != http* ]] ; then 
 	nc_api_url="https://$nc_api_url"
 fi
@@ -198,9 +196,26 @@ pass=`cat $nc_api_passfile`
 # -u: url of nextcloud
 # -n: username
 # -i: ignore ssl error
-ncp_upload_file() {
-if [ -z "$_upload_file" ]; then
-	echo "Need _upload_file arg."
+nc_upload_file() {
+
+
+ local insecure="$nc_api_insecure"
+ local to_nc_path=""
+ local upload_file=""
+  while getopts "f:t:i" opt; do
+    case $opt in
+      f) # from file path
+              upload_file="$OPTARG"
+          ;;
+      t) # to file path
+              to_nc_path="$OPTARG"
+          ;;
+  i) insecure="-i"
+  esac
+  done
+
+if [ -z "$upload_file" ]; then
+	echo "Need -f arg."
 	exit
 fi
 if [[ "$nc_api_url" != http* ]]; then 
@@ -213,11 +228,11 @@ fi
 #fi
 
 echo "$nc_api_url"
-echo "from: $_upload_file"
-echo "to: $_upload_file_nc_path"
-echo "curl command $nc_api_url/remote.php/dav/files/$nc_api_user/$_upload_file_nc_path -T $_upload_file"
+echo "from: $upload_file"
+echo "to: $to_nc_path"
+echo "curl command $nc_api_url/remote.php/dav/files/$nc_api_user/$to_nc_path -T $upload_file"
 pass=`cat $nc_api_passfile`
-	curl "$nc_api_insecure" -X "PUT" -u "$nc_api_user:$pass" "$nc_api_url/remote.php/dav/files/$nc_api_user/$_upload_file_nc_path" -T "$_upload_file"
+	curl "$insecure" -X "PUT" -u "$nc_api_user:$pass" "$nc_api_url/remote.php/dav/files/$nc_api_user/$to_nc_path" -T "$upload_file"
 echo "done."
 }
 

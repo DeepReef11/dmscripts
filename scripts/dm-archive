@@ -33,21 +33,32 @@ saveWebPage() {
 # param:
 # $listfile: filepath to local nextcloud directory. ex:
 # fileList="${ncp_local_dir}/${ncp_downloadlists_dir}/${nc_youtube_list_file}"
-create_or_append_to_local_nc_filelist() {
-  if [ -n "$listFile" ] ; then
-  	downloadListsStructure="# url${delimiter}id${delimiter}path" 
-  	touch "$listFile"
-  	line=$(head -n1 "$listFile")
-	  if [ "$line" != "$downloadListsStructure" ] ; then
-		  echo "$downloadListsStructure
-		  $(cat $listFile)" > "$listFile"
+ create_or_append_to_local_nc_filelist() {
+  local local_nc_list_file="$1"
+  local download_list_structure="$2"
+  if [ -n "$local_nc_list_file" ] ; then
+    if [ -z "$download_list_structure" ] ; then
+      download_list_structure="# url${delimiter}path${delimiter}ID" 
+    fi
+  	touch "$local_nc_list_file"
+  	line=$(head -n1 "$local_nc_list_file")
+	  if [ "$line" != "$download_list_structure" ] ; then
+      # append structure to beginning
+		  echo "$download_list_structure
+		  $(cat $local_nc_list_file)" > "$local_nc_list_file"
 	  fi
-    id=$(uuidgen)
 	  filepath=$(file_explorer "$ncp_local_dir")  
     filepath=$(string_remove_to_index_of_string "$filepath" "$ncp_local_dir")
-    echo "$clip${delimiter}$id${delimiter}$filepath" >> "$listFile"
+    local id=""
+    if [[ "$download_list_structure" == *"${delimiter}ID"*  ]] ||
+      [[  "$download_list_structure" == "ID${delimiter}"* ]] ; then
+      id=$(uuidgen)
+      echo "$clip${delimiter}$filepath${delimiter}$id" >> "$local_nc_list_file"
+    else
+      echo "$clip${delimiter}$filepath" >> "$local_nc_list_file"
+    fi
   else
-    echo "listFile argument required"
+    echo "local_nc_list_file argument required"
   fi
 }
 
@@ -55,12 +66,13 @@ downloadVideo() {
 	
   txtYtNcp="Yt-dl to Ncp"
 	choice=$(echo -e "${txtYtNcp}\n" | ${DMENU} "$txtDownloadVideo: ")
-	case $choice in
-		$txtYtNcp)
+	case $choice in 
+    "$txtYtNcp")
 			echo "$txtYtNcp"
-      listFile="${ncp_local_dir}/${ncp_downloadlists_dir}/${nc_youtube_list_file}"
-		  create_or_append_to_local_nc_filelist	
-			;;
+      local listFile="${ncp_local_dir}/${ncp_downloadlists_dir}/${nc_youtube_list_file}"
+      local list_structure="# url${delimiter}path" 
+		  create_or_append_to_local_nc_filelist "$listFile"	"$list_structure"
+ 			;;
 		esac
 
 }
@@ -73,8 +85,9 @@ downloadFile() {
 	case $choice in
 		$txtWgetNc)
 			echo "$txtWgetNc"
-      listFile="${ncp_local_dir}/${ncp_downloadlists_dir}/${nc_wget_list_file}"
-      create_or_append_to_local_nc_filelist
+      local listFile="${ncp_local_dir}/${ncp_downloadlists_dir}/${nc_wget_list_file}"
+      local list_structure="# url${delimiter}path" 
+      create_or_append_to_local_nc_filelist "$listFile" "$list_structure"
 			;;
 		esac
 
