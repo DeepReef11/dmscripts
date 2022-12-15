@@ -95,7 +95,7 @@ listfile=$(nc_get_file "$nc_api_yt_list_file")
       echo "yt completed $completed."
         if [ "$completed" = "true" ] ; then
           local file_name
-          file_name=$(youtube-dl "${lurl}" --restrict-filenames -j | jq '._filename')
+          file_name=$(/usr/local/bin/youtube-dl "${lurl}" --restrict-filenames -j | jq '._filename')
           local file_path="$local_download_directory/$file_name"
           # upload video to nc
           nc_upload_file -f "$file_path" -t "$lpath/$file_name" && 
@@ -116,19 +116,19 @@ completed_list_line() {
   local nc_list_path="$1"
   local local_list_path="$2"
   local to_remove="$3"
-  if [ -z "$nc_list_path" ] || [ -z "$ro_remove" ] ; then
+  if [ -z "$nc_list_path" ] || [ -z "$to_remove" ]; then
     echo "Arguments not provided."
     exit
   fi
   local list_file
-  list_file=$(nc_get_file "$list_path") 
+  list_file=$(nc_get_file "$nc_list_path") 
   local uncompleted_list_file
   uncompleted_list_file=$(echo "$list_file" | sed "/$to_remove/d") 
   rm -f "$local_list_path"
   echo "$uncompleted_list_file" > "$local_list_path" &&
   nc_upload_file -f "$local_list_path" -t "$nc_list_path" && echo "Updated $nc_list_path"
   echo "$list_file" | grep "$to_remove" >> "$local_completed_list_file" &&
-  nc_upload_file -f "$local_completed_list_file" -t $nc_api_completed_list_file && echo "Updated $nc_api_completed_list_file"
+  nc_upload_file -f "$local_completed_list_file" -t "$nc_api_completed_list_file" && echo "Updated $nc_api_completed_list_file"
 
 }
 
