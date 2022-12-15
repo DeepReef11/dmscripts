@@ -2,15 +2,16 @@
 #
 # This scripts provides nextcloud related api funciton
 #
+# It works with oh-my-zsh shell (maybe just zsh), I do not know why.
 #
-# -> youtube-dl must be installed properly for crontab root (sudo crontab -e)
+# read with zsh: https://superuser.com/questions/555874/zsh-read-command-fails-within-bash-function-read1-p-no-coprocess
+# Upload file to nextlcoud through api: https://linuxfun.org/en/2021/07/02/nextcloud-operation-api-with-curl-en/
+#
+# youtube-dl must be installed properly for crontab root (sudo crontab -e)
 #sudo apt remove youtube-dl
 #sudo apt install python3-pip
 #python3 -m pip install youtube-dl
-#
-# -> jq must be installed
-# sudo apt install jq
-#
+
 
 #IFS= read -sr "?Enter a password: " password
 #read "?Path to file: " filepath
@@ -94,8 +95,8 @@ listfile=$(nc_get_file "$nc_api_yt_list_file")
       sudo /usr/local/bin/youtube-dl "${lurl}" --restrict-filenames -c -f 18 -o "${local_download_directory}/%(upload_date)s-%(uploader)s-%(title)s.%(ext)s" >> "$local_yt_log_file" && completed="true" 
       echo "yt completed $completed."
         if [ "$completed" = "true" ] ; then
-          local file_name
-          file_name=$(youtube-dl "${lurl}" --restrict-filenames -j | jq '._filename')
+
+          local file_name=$(youtube-dl "${url}" --restrict-filenames | jq '._filename')
           local file_path="$local_download_directory/$file_name"
           # upload video to nc
           nc_upload_file -f "$file_path" -t "$lpath/$file_name" && 
@@ -153,8 +154,8 @@ parse_list_line() {
       string=${string#*"$nc_api_list_delimiter"}
     done
     lurl="${newarray[0]}"
-    lpath="${newarray[1]}"
-    lid="${newarray[2]}"
+    lid="${newarray[1]}"
+    lpath="${newarray[2]}"
 
   fi
 }
@@ -221,9 +222,6 @@ if [ -z "$upload_file" ]; then
 fi
 if [[ "$nc_api_url" != http* ]]; then 
 	nc_api_url="https://$nc_api_url"
-fi
-if [[ "$to_nc_path" == "/"* ]]; then
-        to_nc_path=$(echo "$to_nc_path" | cut -c 2-)
 fi
 
 # Remove sla-sh (/)
