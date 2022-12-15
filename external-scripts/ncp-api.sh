@@ -127,10 +127,12 @@ completed_list_line() {
   local uncompleted_list_file
   uncompleted_list_file=$(echo "$list_file" | sed "\|$to_remove|d") 
   rm -f "$local_list_path"
+  # Update list file
   echo "$uncompleted_list_file" > "$local_list_path" &&
-  nc_upload_file -f "$local_list_path" -t "$nc_list_path" && echo "Updated $nc_list_path"
-  echo "$list_file" | grep "$to_remove" | sed "s/\$/${nc_api_list_delimiter}${note}" >> "$local_completed_list_file" &&
-  nc_upload_file -f "$local_completed_list_file" -t "$nc_api_completed_list_file" && echo "Updated $nc_api_completed_list_file"
+  nc_upload_file -f "$local_list_path" -t "$nc_list_path" && echo "Updated $nc_list_path" || echo "Error: Didn't update list file $nc_list_path"
+  # Update completed list file
+  echo "$list_file" | grep "$to_remove" | sed "s|\$|${nc_api_list_delimiter}${note} " >> "$local_completed_list_file" &&
+  nc_upload_file -f "$local_completed_list_file" -t "$nc_api_completed_list_file" && echo "Updated $nc_api_completed_list_file" || echo "Error: Didn't update completed list file $nc_api_completed_list_file"
 
 }
 
@@ -170,7 +172,8 @@ parse_list_line() {
 # $user: Nextcloud user
 # $insecure: Must be declared to make insecure upload (insecure="true")
 nc_upload_without_id() {
-  local fileName=$(ls "$local_download_directory" | grep "${lid}")
+  local fileName
+  filename=$(ls "$local_download_directory" | grep "${lid}")
   local filePath="$local_download_directory/$fileName"
   local nameWithoutID=$(echo "${fileName#*${lid}-}")
   # Upload video to nextcloud
@@ -186,7 +189,7 @@ if [[ "$nc_api_url" != http* ]] ; then
 fi
 
 
-pass=`cat $nc_api_passfile`
+pass=$(cat "$nc_api_passfile")
 	curl "$nc_api_insecure" -X "GET" -u "$nc_api_user:$pass" "$nc_api_url/remote.php/dav/files/$nc_api_user/$_get_file" 
 }
 
@@ -203,7 +206,7 @@ nc_upload_file() {
  local insecure="$nc_api_insecure"
  local to_nc_path=""
  local upload_file=""
-  while getopts "f:t:i" opt; do
+  while getopts "f:t:ik" opt; do
     case $opt in
       f) # from file path
               upload_file="$OPTARG"
@@ -211,7 +214,8 @@ nc_upload_file() {
       t) # to file path
               to_nc_path="$OPTARG"
           ;;
-  i) insecure="-i";;
+  i) insecure="-k";;
+  k) insecure="-k";;
     *) echo "Upload file: Invalid argument"
       exit;;
   esac
@@ -236,10 +240,10 @@ fi
 echo "$nc_api_url"
 echo "from: $upload_file"
 echo "to: $to_nc_path"
-echo "curl command $nc_api_url/remote.php/dav/files/$nc_api_user/$to_nc_path -T $upload_file"
-pass=`cat $nc_api_passfile`
-	curl "$insecure" -X "PUT" -u "$nc_api_user:$pass" "$nc_api_url/remote.php/dav/files/$nc_api_user/$to_nc_path" -T "$upload_file"
-echo "done."
+echo "curl command insecure: $insecure url: $nc_api_url/remote.php/dav/files/$nc_api_user/$to_nc_path -T $upload_file"
+pass=$(cat "$nc_api_passfile")
+	curl "$insecure" -X "PUT" -u "$nc_api_user:$pass" "$nc_api_url/remote.php/dav/files/$nc_api_user/$to_nc_path" -T "$upload_file" &&
+echo "done." || echo "Error: curl didn't work properly."
 }
 
 config_init
