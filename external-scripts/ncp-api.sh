@@ -96,7 +96,7 @@ listfile=$(nc_get_file "$nc_api_yt_list_file")
         if [ "$completed" = "true" ] ; then
           local file_name
           file_name=$(/usr/local/bin/youtube-dl "${lurl}" --restrict-filenames -j | jq '._filename' | cut -c 2- | rev | cut -c 2- | rev )
-          file_name=$(basename $(ls "$local_download_directory/*$file_name*"))
+          file_name=$(basename $(ls $local_download_directory/*"$file_name"*))
           local file_path="$local_download_directory/$file_name"
           # upload video to nc
           nc_upload_file -f "$file_path" -t "$lpath/$file_name" && 
