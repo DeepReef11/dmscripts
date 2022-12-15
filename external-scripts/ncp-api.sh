@@ -95,13 +95,13 @@ listfile=$(nc_get_file "$nc_api_yt_list_file")
       echo "yt completed $completed."
         if [ "$completed" = "true" ] ; then
           local file_name
-          file_name=$(/usr/local/bin/youtube-dl "${lurl}" --restrict-filenames -j | jq '._filename' | cut -c 2- | rev | cut -c 2- | rev )
-          file_name=$(basename $(ls $local_download_directory/*"$file_name"*))
+          file_name=$(/usr/local/bin/youtube-dl "${lurl}" --restrict-filenames -j | jq '.upload_date' | cut -c 2- | rev | cut -c 2- | rev )
+          file_name=$(ls "$local_download_directory" | grep "$file_name")
           local file_path="$local_download_directory/$file_name"
           # upload video to nc
           nc_upload_file -f "$file_path" -t "$lpath/$file_name" && 
             completed_list_line "$nc_api_yt_list_file" "$local_yt_list_file" "$lurl" "$file_name" &&
-          rm -f "$file_path"
+            rm -f "$file_path" || (echo "Error: couldn't update list files" && exit 1)
         fi
       fi
     done <<< "$listfile"
@@ -130,10 +130,10 @@ completed_list_line() {
   rm -f "$local_list_path"
   # Update list file
   echo "$uncompleted_list_file" > "$local_list_path" &&
-  nc_upload_file -f "$local_list_path" -t "$nc_list_path" && echo "Updated $nc_list_path" || echo "Error: Didn't update list file $nc_list_path"
+    nc_upload_file -f "$local_list_path" -t "$nc_list_path" && echo "Updated $nc_list_path" || (echo "Error: Didn't update list file $nc_list_path" && exit 1)
   # Update completed list file
-  echo "$list_file" | grep "$to_remove" | sed "s|\$|${nc_api_list_delimiter}${note} " >> "$local_completed_list_file" &&
-  nc_upload_file -f "$local_completed_list_file" -t "$nc_api_completed_list_file" && echo "Updated $nc_api_completed_list_file" || echo "Error: Didn't update completed list file $nc_api_completed_list_file"
+  echo "$list_file" | grep "$to_remove" | sed "s|\$|${nc_api_list_delimiter}${note}|" >> "$local_completed_list_file" &&
+    nc_upload_file -f "$local_completed_list_file" -t "$nc_api_completed_list_file" && echo "Updated $nc_api_completed_list_file" || (echo "Error: Didn't update completed list file $nc_api_completed_list_file" && exit 1)
 
 }
 
@@ -245,10 +245,10 @@ echo "curl command insecure: $insecure url: $nc_api_url/remote.php/dav/files/$nc
 pass=$(cat "$nc_api_passfile")
 if [ -n "$insecure" ] ; then 
   curl -k -X "PUT" -u "$nc_api_user:$pass" "$nc_api_url/remote.php/dav/files/$nc_api_user/$to_nc_path" -T "$upload_file" && 
-  echo "done." || echo "Error: curl didn't work properly." && exit 1
+    echo "done." || (echo "Error: curl didn't work properly." && exit 1)
 else
 	curl -X "PUT" -u "$nc_api_user:$pass" "$nc_api_url/remote.php/dav/files/$nc_api_user/$to_nc_path" -T "$upload_file" &&
-  echo "done." || echo "Error: curl didn't work properly." && exit 1
+    echo "done." || (echo "Error: curl didn't work properly." && exit 1)
 fi
 }
 
