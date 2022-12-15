@@ -95,7 +95,7 @@ listfile=$(nc_get_file "$nc_api_yt_list_file")
       echo "yt completed $completed."
         if [ "$completed" = "true" ] ; then
           local file_name
-          file_name=$(/usr/local/bin/youtube-dl "${lurl}" --restrict-filenames -j | jq '._filename')
+          file_name=$(/usr/local/bin/youtube-dl "${lurl}" --restrict-filenames -j | jq '._filename' | cut -c 2- | rev | cut -c 2- | rev )
           local file_path="$local_download_directory/$file_name"
           # upload video to nc
           nc_upload_file -f "$file_path" -t "$lpath/$file_name" && 
@@ -242,8 +242,13 @@ echo "from: $upload_file"
 echo "to: $to_nc_path"
 echo "curl command insecure: $insecure url: $nc_api_url/remote.php/dav/files/$nc_api_user/$to_nc_path -T $upload_file"
 pass=$(cat "$nc_api_passfile")
-	curl "$insecure" -X "PUT" -u "$nc_api_user:$pass" "$nc_api_url/remote.php/dav/files/$nc_api_user/$to_nc_path" -T "$upload_file" &&
-echo "done." || echo "Error: curl didn't work properly."
+if [ -n "$insecure" ] ; then 
+  curl -k -X "PUT" -u "$nc_api_user:$pass" "$nc_api_url/remote.php/dav/files/$nc_api_user/$to_nc_path" -T "$upload_file" && 
+  echo "done." || echo "Error: curl didn't work properly." && exit 1
+else
+	curl -X "PUT" -u "$nc_api_user:$pass" "$nc_api_url/remote.php/dav/files/$nc_api_user/$to_nc_path" -T "$upload_file" &&
+  echo "done." || echo "Error: curl didn't work properly." && exit 1
+fi
 }
 
 config_init
