@@ -61,7 +61,7 @@ download_file_from_list_with_wget() {
         echo "Completed $completed."
         if [ "$completed" = "true" ] ; then
           nc_upload_file -f "$local_download_directory/$filename" -t "$lpath/$filename" &&
-          completed_list_line "$nc_api_wget_list_file" "$local_wget_list_file" "$lurl" &&
+          completed_list_line "$nc_api_wget_list_file" "$local_wget_list_file" "$lurl" "$filename" &&
           rm -f "$local_download_directory/$filename"
         fi
       fi
@@ -99,7 +99,7 @@ listfile=$(nc_get_file "$nc_api_yt_list_file")
           local file_path="$local_download_directory/$file_name"
           # upload video to nc
           nc_upload_file -f "$file_path" -t "$lpath/$file_name" && 
-            completed_list_line "$nc_api_yt_list_file" "$local_yt_list_file" "$lurl" &&
+            completed_list_line "$nc_api_yt_list_file" "$local_yt_list_file" "$lurl" "$file_name" &&
           rm -f "$file_path"
         fi
       fi
@@ -112,10 +112,12 @@ listfile=$(nc_get_file "$nc_api_yt_list_file")
 # $1: nc path to list file
 # $2: local path to list file
 # $3: string to remove. Usually the url of the file.
+# $4: (optional) string: a note to append to completed line (name of file for instance)
 completed_list_line() {
   local nc_list_path="$1"
   local local_list_path="$2"
   local to_remove="$3"
+  local note="$4" 
   if [ -z "$nc_list_path" ] || [ -z "$to_remove" ]; then
     echo "Arguments not provided."
     exit
@@ -127,7 +129,7 @@ completed_list_line() {
   rm -f "$local_list_path"
   echo "$uncompleted_list_file" > "$local_list_path" &&
   nc_upload_file -f "$local_list_path" -t "$nc_list_path" && echo "Updated $nc_list_path"
-  echo "$list_file" | grep "$to_remove" >> "$local_completed_list_file" &&
+  echo "$list_file" | grep "$to_remove" | sed "s/\$/${nc_api_list_delimiter}${note}" >> "$local_completed_list_file" &&
   nc_upload_file -f "$local_completed_list_file" -t "$nc_api_completed_list_file" && echo "Updated $nc_api_completed_list_file"
 
 }
