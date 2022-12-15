@@ -16,6 +16,7 @@
 #read "?Path to file: " filepath
 
 config_init() {
+  # TODO: Put these config in a file and read from there. 
 nc_api_passfile="${HOME}/workspace/token/fu.txt"
 nc_api_listpath="shared-folder/download-queue" #/wget.txt"
 nc_api_user="fu"
@@ -31,14 +32,14 @@ mkdir -p "$local_download_directory"
 local_yt_list_file="$local_download_directory/youtube.txt"
 local_wget_list_file="$local_download_directory/wget.txt"
 local_completed_list_file="$local_download_directory/completed.txt"
+local_yt_log_file="${local_download_directory}/yt-log.txt"
+local_wget_log_file="${local_download_directory}/wget-log.txt"
 touch "$local_yt_list_file" "$local_wget_list_file" "$local_yt_log_file" "$local_wget_log_file"
 rm -f "$local_completed_list_file"
 touch "$local_completed_list_file"
 local content
 content=$(nc_get_file "$nc_api_completed_list_file")
 echo "$content" >> "$local_completed_list_file"
-local_yt_log_file="${local_download_directory}/yt-log.txt"
-local_wget_log_file="${local_download_directory}/wget-log.txt"
 }
 
 # This function use a list of file url to download a file and upload it
