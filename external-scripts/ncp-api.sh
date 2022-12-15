@@ -99,7 +99,7 @@ listfile=$(nc_get_file "$nc_api_yt_list_file")
           local file_path="$local_download_directory/$file_name"
           # upload video to nc
           nc_upload_file -f "$file_path" -t "$lpath/$file_name" && 
-          completed_list_line "$nc_api_yt_list_file" "$local_yt_list_file" "$lurl" &&
+            completed_list_line "$nc_api_yt_list_file" "$local_yt_list_file" "$lurl" &&
           rm -f "$file_path"
         fi
       fi
@@ -123,7 +123,7 @@ completed_list_line() {
   local list_file
   list_file=$(nc_get_file "$nc_list_path") 
   local uncompleted_list_file
-  uncompleted_list_file=$(echo "$list_file" | sed "/$to_remove/d") 
+  uncompleted_list_file=$(echo "$list_file" | sed "\|$to_remove|d") 
   rm -f "$local_list_path"
   echo "$uncompleted_list_file" > "$local_list_path" &&
   nc_upload_file -f "$local_list_path" -t "$nc_list_path" && echo "Updated $nc_list_path"
@@ -197,7 +197,7 @@ pass=`cat $nc_api_passfile`
 # -i: ignore ssl error
 nc_upload_file() {
 
-
+  local OPTIND
  local insecure="$nc_api_insecure"
  local to_nc_path=""
  local upload_file=""
