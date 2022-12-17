@@ -13,7 +13,8 @@ fi
 source "$(get_config)"
 
 saveSinglePageWget() {
-	filepath=$(file_explorer)  # TODO: a start path for archives could be added in config. 
+	local filepath=$(file_explorer)  # TODO: a start path for archives could be added in config.
+  local dirname=$(basename $clip)
 	wget -E -H -k -K -nd -N -p -P "$filepath/$dirname" \
   $clip	
 }
