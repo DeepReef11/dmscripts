@@ -104,7 +104,7 @@ searchstring="$2"
 
 file_explorer() {
 
-start="${fileexplorer_start}"
+local start="${fileexplorer_start}"
 if [ "$#" -gt 0 ] && [ ! -z "$1" ] ; then
 	start="$1"
 fi
@@ -115,20 +115,22 @@ then
     exit 1
 fi
 
-txtMkDir="Create a new directory"
-currentpath="$start"
-br="\n"
+local txtMkDir="Create a new directory"
+local currentpath="$start"
 while true; do
   choice=$(echo -e "$txtMkDir\n$(ls -b -a "$currentpath")" | ${DMENU} 'Select: ') #"$@")
-	case $choice in
+    case $choice in
     "$txtMkDir") 
       currentpath=$(create_directory $currentpath $txtMkDir)
       ;; 
 		.) 
 			break;;
 		..) 
-			currentpath="$(dirname "$currentpath")";;
+			currentpath="$(dirname "$currentpath")";; 
 		*) 
+      if [ -z "$choice" ] ; then 
+        exit 1
+      fi
 		  currentpath="$currentpath/$choice"
 		  if [ ! -d "$currentpath" ]; then
 			break

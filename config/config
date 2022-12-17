@@ -11,16 +11,30 @@
 
 DMENU="dmenu -i -l 20 -p"
 
-PDF_VIEWER="zathura"
 
-DMBROWSER="brave"
+#PDF_VIEWER="zathura"
+# To read markdown file (.md) with zathura, do the following:
+# sudo apt-get install pandoc texlive-latex-base texlive-fonts-recommended texlive-extra-utils texlive-latex-extra
+# 
+# If zathura not installed:
+# sudo apt install zathura
+#
+# Convert md to pdf:
+# pandoc -t pdf "/file/path" | zathura -
+
+
+#PDF_VIEWER="zathura"
+PDF_VIEWER="ebook-viewer"
+DMBROWSER="qutebrowser"
 # DMBROWSER="qutebrowser"
 
 DMTERM="st -e"
 # DMTERM="alacritty -e"
 
-DMEDITOR="emacsclient -c -a emacs"
+DMEDITOR="nvim"
 # DMEDITOR="${DMTERM} vim"
+
+delimiter=", "
 
 # TODO: Rename this variable to something more traditional
 logout_locker='slock'
@@ -72,25 +86,23 @@ maim_file_prefix="maim"
 note_dir="${HOME}/.config/dmscripts/dmnote"
 
 # dm-confedit
+confedit_delimiter="$delimiter"
 declare -A confedit_list
-confedit_list[confedit]="$HOME/.config/dmscripts/config"
+confedit_list[dmscripts]="$HOME/.config/dmscripts/config"
 confedit_list[alacritty]="$HOME/.config/alacritty/alacritty.yml"
+confedit_list[autostart]="$HOME/workspace/dwm-flexipatch/.dwm/autostart.sh"
+confedit_list[autostartblocking]="$HOME/workspace/dwm-flexipatch/.dwm/autostart_blocking.sh"
 confedit_list[awesome]="$HOME/.config/awesome/rc.lua"
 confedit_list[bash]="$HOME/.bashrc"
 confedit_list[broot]="$HOME/.config/broot/conf.toml"
 confedit_list[bspwm]="$HOME/.config/bspwm/bspwmrc"
-confedit_list[doom emacs config.el]="$HOME/.config/doom/config.el"
-confedit_list[doom emacs config.org]="$HOME/.config/doom/config.org"
-confedit_list[doom emacs init.el]="$HOME/.config/doom/init.el"
-confedit_list[doom emacs packages.el]="$HOME/.config/doom/packages.el"
-confedit_list[dunst]="$HOME/.config/dunst/dunstrc"
-confedit_list[dwm]="$HOME/dwm-distrotube/config.def.h"
+confedit_list[dunst]="$HOME/.config/dunst/dunstrc, pkill dunst & disown \$!"
+confedit_list[dwm]="$HOME/workspace/dwm-flexipatch/config.def.h"
 confedit_list[dwmblocks]="$HOME/dwmblocks-distrotube/blocks.def.h"
 confedit_list[fish]="$HOME/.config/fish/config.fish"
 confedit_list[herbstluftwm]="$HOME/.config/herbstluftwm/autostart"
-confedit_list[i3]="$HOME/.config/i3/config"
 confedit_list[ncmpcpp]="$HOME/.config/ncmpcpp/config"
-confedit_list[neovim]="$HOME/.config/nvim/init.vim"
+confedit_list[nvim]="$HOME/.config/nvim/init.vim"
 confedit_list[picom]="$HOME/.config/picom/picom.conf"
 confedit_list[polybar]="$HOME/.config/polybar/config"
 confedit_list[qtile]="$HOME/.config/qtile/config.py"
@@ -102,7 +114,7 @@ confedit_list[ssh]="$HOME/.ssh/config"
 confedit_list[st]="$HOME/st-distrotube/config.def.h"
 confedit_list[stumpwm]="$HOME/.config/stumpwm/config"
 confedit_list[surf]="$HOME/surf-distrotube/config.def.h"
-confedit_list[sxhkd]="$HOME/.config/sxhkd/sxhkdrc"
+confedit_list[sxhkd]="$HOME/.config/sxhkd/sxhkdrc${confedit_delimiter}systemctl --user restart sxhkd.service"
 confedit_list[tabbed]="$HOME/tabbed-distrotube/config.def.h"
 confedit_list[vifm]="$HOME/.config/vifm/vifmrc"
 confedit_list[vim]="$HOME/.vimrc"
@@ -263,3 +275,20 @@ declare -A currencies
 # see: https://rate.sx/:currencies and https://rate.sx/:coins
 
 _revision=22
+
+# dm-archive config
+declare -A archive_path
+archive_path[base de connaissance]="${HOME}/workspace/nextcloud/shared-folder/base-de-connaissance"
+
+# dm-file-explorer config
+fileexplorer_start="${HOME}"
+
+# dm-find-tips config
+findtips_start="${HOME}/workspace/nextcloud/shared-folder/base-de-connaissance"
+
+# download lists path
+# path to nextcloud directory where nextcloud client syncronise files
+ncp_local_dir="${HOME}/workspace/nextcloud"
+ncp_downloadlists_dir="shared-folder/download-queue"
+nc_youtube_list_file="youtube.txt"
+nc_wget_list_file="wget.txt"
