@@ -48,7 +48,7 @@ saveWebPage() {
 		  echo "$download_list_structure
 		  $(cat $local_nc_list_file)" > "$local_nc_list_file"
 	  fi
-	  filepath=$(file_explorer "$fileexplorer_start")
+	  filepath=$(file_explorer "$ncp_local_dir")
     filepath=$(string_remove_to_index_of_string "$filepath" "$ncp_local_dir")
     local id=""
     if [[ "$download_list_structure" == *"${delimiter}ID"*  ]] ||
