@@ -49,6 +49,7 @@ saveWebPage() {
 		  $(cat $local_nc_list_file)" > "$local_nc_list_file"
 	  fi
 	  touch "$nc_archive_video_history_file"
+      local arr_top_choice=() 
 	  readarray -t arr_top_choice < "$nc_archive_video_history_file"
 	  filepath=$(file_explorer "$ncp_local_dir" "${arr_top_choice[@]}")
 

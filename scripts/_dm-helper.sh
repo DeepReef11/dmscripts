@@ -110,7 +110,7 @@ if [ "$#" -gt 0 ] ;  then
     if [ ! -z "$1" ] ; then
     	start="$1"
 	fi
-	if [ ! -z "$2" ] ; then
+	if [ "$#" -gt 1 ] && [ ! -z "$2" ] ; then
         shift            # Shift all arguments to the left (original $1 gets lost)
         arr_top_choice=("$@")
     fi
@@ -127,7 +127,7 @@ local txtMkDir="Create a new directory"
 local currentpath="$start"
 local top_choice=1
 while true; do
-    if [ ! -z "$arr_top_choice" ] && [ "$top_choice" -gt 0 ] ; then
+    if  [ "$top_choice" -ne 0 ] && [[ ${arr_top_choice[@]:+${arr_top_choice[@]}} ]] && [ ${#arr_top_choice[@]} -ne 0 ]; then
         choice=$(printf "%s\n" "${arr_top_choice[@]}" "$txtMkDir" "$(ls -b -a "$currentpath")" | ${DMENU} 'Select: ') #"$@")
         
     else 
