@@ -105,8 +105,16 @@ searchstring="$2"
 file_explorer() {
 
 local start="${fileexplorer_start}"
-if [ "$#" -gt 0 ] && [ ! -z "$1" ] ; then
-	start="$1"
+local arr_top_choice
+if [ "$#" -gt 0 ] ;  then
+    if [ ! -z "$1" ] ; then
+    	start="$1"
+	fi
+	if [ ! -z "$2" ] ; then
+        shift            # Shift all arguments to the left (original $1 gets lost)
+        arr_top_choice=("$@")
+    fi
+
 fi
 if [ ! -d "$start" ];
 then
@@ -117,8 +125,14 @@ fi
 
 local txtMkDir="Create a new directory"
 local currentpath="$start"
+local top_choice=1
 while true; do
-  choice=$(echo -e "$txtMkDir\n$(ls -b -a "$currentpath")" | ${DMENU} 'Select: ') #"$@")
+    if [ ! -z "$arr_top_choice" ] && [ "$top_choice" -gt 0 ] ; then
+        choice=$(printf "%s\n" "${arr_top_choice[@]}" "$txtMkDir" "$(ls -b -a "$currentpath")" | ${DMENU} 'Select: ') #"$@")
+        
+    else 
+        choice=$(echo -e "$txtMkDir\n$(ls -b -a "$currentpath")" | ${DMENU} 'Select: ') #"$@")
+    fi
     case $choice in
     "$txtMkDir") 
       currentpath=$(create_directory $currentpath $txtMkDir)
@@ -130,7 +144,24 @@ while true; do
 		*) 
       if [ -z "$choice" ] ; then 
         exit 1
-      fi
+    fi
+    if [ "$top_choice" -gt 0 ] ; then
+        top_choice=0
+        for c in "${arr_top_choice[@]}";
+        do
+            if [ "$c" == "$choice" ] ; then
+                top_choice=1
+                currentpath="$choice"
+                break
+            fi
+        done
+        if [ "$top_choice" -gt 0 ] ; then
+            break
+        fi
+
+        
+    fi
+    
 		  currentpath="$currentpath/$choice"
 		  if [ ! -d "$currentpath" ]; then
 			break

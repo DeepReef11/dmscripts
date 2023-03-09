@@ -48,8 +48,14 @@ saveWebPage() {
 		  echo "$download_list_structure
 		  $(cat $local_nc_list_file)" > "$local_nc_list_file"
 	  fi
-	  filepath=$(file_explorer "$ncp_local_dir")
+	  touch "$nc_archive_video_history_file"
+	  readarray -t arr_top_choice < "$nc_archive_video_history_file"
+	  filepath=$(file_explorer "$ncp_local_dir" "${arr_top_choice[@]}")
+
+        addToPathHistory "$filepath" "$nc_archive_video_history_file" 3 "${arr_top_choice[@]}"
+            
     filepath=$(string_remove_to_index_of_string "$filepath" "$ncp_local_dir")
+    echo "$filepath"
     local id=""
     if [[ "$download_list_structure" == *"${delimiter}ID"*  ]] ||
       [[  "$download_list_structure" == "ID${delimiter}"* ]] ; then
@@ -62,7 +68,25 @@ saveWebPage() {
     echo "local_nc_list_file argument required"
   fi
 }
-
+addToPathHistory() {
+    local filepath="$1"
+    local historyfile="$2"
+    local historyLenght=$(($3 - 1))
+    shift 3
+    local arr_top_choice=("$@")
+    local add_to_history=1
+    for c in "${arr_top_choice[@]}";
+      do
+          if [ "$c" == "$filepath" ] ; then
+              add_to_history=0
+              break
+          fi
+      done    
+    if [ "$add_to_history" -gt 0 ] ; then
+        arr_top_choice=( "$filepath" "${arr_top_choice[@]:0:${historyLenght}}")
+        printf "%s\n" "${arr_top_choice[@]}" > "$historyfile"
+    fi
+}
 downloadVideo() {
 	
   txtYtNcp="Yt-dl to Ncp"

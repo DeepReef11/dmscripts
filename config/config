@@ -292,3 +292,5 @@ ncp_local_dir="${HOME}/workspace/nextcloud"
 ncp_downloadlists_dir="shared-folder/download-queue"
 nc_youtube_list_file="youtube.txt"
 nc_wget_list_file="wget.txt"
+
+nc_archive_video_history_file="${HOME}/.config/dmscripts/nc-archive-video-history.txt"
